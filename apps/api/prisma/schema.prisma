@@ -1,0 +1,1319 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum PatientSex {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum PatientSessionStatus {
+  STARTED
+  IN_PROGRESS
+  READY_FOR_REVIEW
+  COMPLETED
+  ABANDONED
+}
+
+enum PatientFlowStep {
+  WELCOME
+  LANGUAGE
+  CONSENT
+  BASIC_INFO
+  CHIEF_COMPLAINT
+  INTERVIEW
+  REVIEW
+  SUBMITTED
+  COMPLETE
+}
+
+enum VisitStatus {
+  WAITING
+  IN_PROGRESS
+  READY_FOR_DOCTOR
+  UNDER_REVIEW
+  VERIFIED
+  COMPLETED
+  CANCELLED
+}
+
+enum VisitType {
+  PRE_CONSULTATION
+  FOLLOW_UP
+}
+
+enum ClinicalSource {
+  PATIENT_REPORTED
+  AI_STRUCTURED
+  DOCUMENT_EXTRACTED
+  DOCTOR_ENTERED
+  AYUSH_PRACTITIONER_DOCUMENTED
+  DOCTOR_VERIFIED
+  SYSTEM_GENERATED
+}
+
+enum AyushSystem {
+  AYURVEDA
+  YOGA_NATUROPATHY
+  UNANI
+  SIDDHA
+  HOMOEOPATHY
+  OTHER_TRADITIONAL_SYSTEM
+  UNKNOWN
+}
+
+enum AyushUseStatus {
+  CURRENT
+  HISTORICAL
+  STOPPED
+  UNKNOWN
+  NOT_DOCUMENTED
+}
+
+enum AyushTemporalRelationship {
+  REPORTED_AFTER
+  DOCUMENTED_ALONGSIDE
+  UNKNOWN
+}
+
+enum KnowledgeState {
+  YES
+  NO
+  UNKNOWN
+  NOT_ASKED
+  NOT_APPLICABLE
+  CONFLICT
+}
+
+enum DocumentStatus {
+  UPLOADED
+  VALIDATING
+  PREPROCESSING
+  OCR_PROCESSING
+  LAYOUT_PROCESSING
+  EXTRACTING
+  NORMALIZING
+  REVIEW_REQUIRED
+  VERIFIED
+  FAILED
+  CANCELLED
+}
+
+enum DocumentType {
+  PRESCRIPTION
+  LAB_REPORT
+  DISCHARGE_SUMMARY
+  CONSULTATION_NOTE
+  UNKNOWN
+}
+
+enum DocumentFactStatus {
+  EXTRACTED
+  NEEDS_REVIEW
+  CONFIRMED
+  REJECTED
+  VERIFIED
+}
+
+enum DocumentIdentityStatus {
+  PENDING
+  MATCHED
+  IDENTITY_MISMATCH
+  NOT_PRESENT
+  MANUAL_OVERRIDE
+}
+
+enum ExtractionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REVIEW_REQUIRED
+  FAILED
+}
+
+enum TimelineSource {
+  PATIENT_REPORTED
+  VOICE_INTERVIEW
+  DOCUMENT_EXTRACTED
+  CLINICAL_RECORD
+  DOCTOR_VERIFIED
+  SYSTEM_GENERATED
+  SAFETY_ENGINE
+}
+
+enum TimelineEventType {
+  PATIENT_VISIT
+  PATIENT_REPORTED_SYMPTOM
+  CLINICAL_HISTORY_UPDATE
+  MEDICATION_RECORDED
+  MEDICATION_CHANGED
+  ALLERGY_RECORDED
+  LAB_RESULT
+  OBSERVATION
+  MEDICAL_DOCUMENT
+  CONSULTATION_NOTE
+  DISCHARGE_EVENT
+  PROCEDURE
+  DOCTOR_VERIFICATION
+  RISK_SIGNAL
+  AYUSH_TREATMENT
+}
+
+enum TimelineDatePrecision {
+  EXACT_DATE
+  MONTH_ONLY
+  YEAR_ONLY
+  DATE_RANGE
+  UNKNOWN
+}
+
+enum TimelineEventStatus {
+  DRAFT
+  CAPTURED
+  AI_STRUCTURED
+  DOCUMENT_EXTRACTED
+  PATIENT_CONFIRMED
+  DOCTOR_VERIFIED
+  REJECTED
+}
+
+enum TimelineTemporalState {
+  CURRENT
+  HISTORICAL
+  UNKNOWN
+  DISCONTINUED
+  NOT_APPLICABLE
+}
+
+enum TimelineMedicationAction {
+  STARTED
+  REPORTED
+  CHANGED
+  CONFIRMED
+  DISCONTINUED
+}
+
+enum ComparisonStatus {
+  GENERATED
+  REVIEWED
+  ARCHIVED
+  STALE
+}
+
+enum ComparisonChangeType {
+  NEW
+  REMOVED
+  CHANGED
+  UNCHANGED
+  CONFLICTED
+  UNKNOWN
+  NOT_COMPARABLE
+  NEWLY_CAPTURED
+}
+
+enum ComparisonEntityType {
+  SYMPTOM
+  MEDICATION
+  ALLERGY
+  OBSERVATION
+  CLINICAL_HISTORY_FIELD
+  DOCUMENT
+  RISK_SIGNAL
+  AYUSH_RECORD
+}
+
+enum MatchConfidence {
+  HIGH
+  MEDIUM
+  LOW
+  NONE
+}
+
+enum ClinicalBriefStatus {
+  GENERATED
+  REVIEWED
+  STALE
+  ARCHIVED
+}
+
+enum BriefSectionType {
+  PATIENT_SNAPSHOT
+  TODAYS_REASON
+  CURRENT_SYMPTOMS
+  WHAT_CHANGED
+  RELEVANT_HISTORY
+  MEDICATIONS
+  ALLERGIES
+  INVESTIGATIONS
+  SAFETY_ATTENTION
+  NEEDS_VERIFICATION
+  SUPPORTING_DOCUMENTS
+  SOURCE_EVIDENCE
+  AYUSH_USE
+}
+
+enum RiskSeverity {
+  INFO
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RiskStatus {
+  OPEN
+  ACKNOWLEDGED
+  DISMISSED
+  RESOLVED
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  PARTIALLY_CORRECT
+  EDITED
+  REJECTED
+  MISSED
+  UNREVIEWED
+  PATIENT_REPORTED
+  AI_STRUCTURED
+  DOCUMENT_EXTRACTED
+  NEEDS_REVIEW
+  DOCTOR_VERIFIED
+  DOCTOR_CORRECTED
+  DOCTOR_REJECTED
+  SUPERSEDED
+}
+
+enum VerificationAction {
+  VERIFY
+  CORRECT
+  REJECT
+  MARK_UNCERTAIN
+  CONFIRM_CURRENT
+  KEEP_PREVIOUS
+  SUPERSEDE
+}
+
+enum VerificationFactType {
+  CLINICAL_HISTORY
+  SYMPTOM
+  MEDICATION
+  ALLERGY
+  OBSERVATION
+  DOCUMENT_FACT
+  INTERVIEW_RESPONSE
+  AYUSH_RECORD
+}
+
+enum VoiceInteractionStatus {
+  RECORDING
+  PROCESSING
+  TRANSCRIBED
+  CONFIRMED
+  EDITED
+  FAILED
+  CANCELLED
+}
+
+enum InterviewStatus {
+  ACTIVE
+  REVIEW
+  COMPLETED
+  ABANDONED
+}
+
+enum InterviewResponseStatus {
+  CAPTURED
+  STRUCTURED
+  CONFIRMED
+  NEEDS_CLARIFICATION
+}
+
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Specialization {
+  id String @id
+  displayName String @unique
+  aliases String[]
+  description String
+  source String
+  providerType String
+  active Boolean @default(true)
+  doctors User[]
+  mappings MedicalConditionSpecialization[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MedicalConditionSpecialization {
+  id String @id
+  conditionName String
+  primarySpecializationId String
+  primarySpecialization Specialization @relation(fields: [primarySpecializationId], references: [id])
+  definition Json
+  datasetVersion String
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([active, primarySpecializationId])
+}
+
+model RoutingDecision {
+  id String @id @default(cuid())
+  sessionId String
+  session PatientSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  visitId String
+  visit Visit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  inputHash String
+  input Json
+  result Json
+  datasetVersion String
+  createdAt DateTime @default(now())
+  @@index([sessionId, createdAt])
+  @@index([visitId, createdAt])
+}
+
+model User {
+  specializationId String @default("unclassified")
+  specialization Specialization @relation(fields: [specializationId], references: [id])
+  acceptingRouting Boolean @default(false)
+  preferredVisits Visit[] @relation("PreferredRoutingDoctor")
+  id                String                    @id @default(cuid())
+  email             String?                   @unique
+  username          String?                   @unique
+  displayName       String
+  role              UserRole
+  status            UserStatus                @default(ACTIVE)
+  preferredLanguage String                    @default("en")
+  patient           PatientProfile?
+  verifications     DoctorVerification[]      @relation("DoctorVerifications")
+  auditLogs         AuditLog[]                @relation("AuditActor")
+  comparisons       Comparison[]              @relation("ComparisonCreator")
+  clinicalBriefs    ClinicalBrief[]           @relation("BriefCreator")
+  doctorNotes       DoctorNote[]              @relation("DoctorNoteAuthor")
+  doctorAssignments DoctorPatientAssignment[] @relation("AssignedDoctor")
+  queueTokens       QueueEntry[]
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  @@index([role, status])
+  @@index([createdAt])
+}
+
+model PatientProfile {
+  id                String                    @id @default(cuid())
+  userId            String?                   @unique
+  user              User?                     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  patientCode       String                    @unique
+  fullName          String
+  age               Int
+  sex               PatientSex
+  preferredLanguage String                    @default("en")
+  phone             String?
+  sessions          PatientSession[]
+  visits            Visit[]
+  medications       Medication[]
+  allergies         Allergy[]
+  documents         MedicalDocument[]
+  documentFacts     DocumentFact[]
+  timelineEvents    TimelineEvent[]
+  observations      Observation[]
+  snapshots         PatientSnapshot[]
+  comparisons       Comparison[]
+  clinicalBriefs    ClinicalBrief[]
+  verifications     DoctorVerification[]
+  consents          ConsentRecord[]
+  ayushRecords      AyushRecord[]
+  doctorNotes       DoctorNote[]
+  doctorAssignments DoctorPatientAssignment[] @relation("AssignedPatient")
+  queueTokens       QueueEntry[]
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  @@index([createdAt])
+  @@index([fullName])
+}
+
+model PatientSession {
+  routingDecisions RoutingDecision[]
+  id                String               @id @default(cuid())
+  patientId         String?
+  patient           PatientProfile?      @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  visitId           String?              @unique
+  visit             Visit?               @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  status            PatientSessionStatus @default(STARTED)
+  currentStep       PatientFlowStep      @default(WELCOME)
+  language          String               @default("en")
+  draftData         Json?
+  startedAt         DateTime             @default(now())
+  completedAt       DateTime?
+  lastActiveAt      DateTime             @default(now())
+  consents          ConsentRecord[]
+  voiceInteractions VoiceInteraction[]
+  interview         Interview?
+  documents         MedicalDocument[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([patientId, status])
+  @@index([status, lastActiveAt])
+  @@index([createdAt])
+}
+
+model Visit {
+  preferredDoctorId String?
+  preferredDoctor User? @relation("PreferredRoutingDoctor", fields: [preferredDoctorId], references: [id], onDelete: SetNull)
+  routingDecisions RoutingDecision[]
+  id                  String               @id @default(cuid())
+  patientId           String
+  patient             PatientProfile       @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  session             PatientSession?
+  tokenNumber         String?
+  queueEntry          QueueEntry?
+  status              VisitStatus          @default(WAITING)
+  visitType           VisitType            @default(PRE_CONSULTATION)
+  startedAt           DateTime             @default(now())
+  completedAt         DateTime?
+  clinicalHistory     ClinicalHistory?
+  symptoms            Symptom[]
+  medications         Medication[]
+  allergies           Allergy[]
+  documents           MedicalDocument[]
+  documentFacts       DocumentFact[]
+  timelineEvents      TimelineEvent[]
+  riskSignals         RiskSignal[]
+  verifications       DoctorVerification[]
+  voiceInteractions   VoiceInteraction[]
+  interview           Interview?
+  observations        Observation[]
+  snapshots           PatientSnapshot[]
+  previousComparisons Comparison[]         @relation("PreviousComparisonVisit")
+  currentComparisons  Comparison[]         @relation("CurrentComparisonVisit")
+  clinicalBriefs      ClinicalBrief[]
+  ayushRecords        AyushRecord[]
+  doctorNotes         DoctorNote[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([patientId, status])
+  @@index([status, createdAt])
+  @@index([startedAt])
+}
+
+model Interview {
+  id                   String              @id @default(cuid())
+  sessionId            String              @unique
+  session              PatientSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  visitId              String              @unique
+  visit                Visit               @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  pathway              String
+  questionGraphVersion String              @default("phase4-v1")
+  state                Json
+  currentQuestionId    String?
+  completeness         Float               @default(0)
+  status               InterviewStatus     @default(ACTIVE)
+  responses            InterviewResponse[]
+  aiInteractions       AIInteraction[]
+  ayushRecord          AyushRecord?
+  startedAt            DateTime            @default(now())
+  completedAt          DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([status, updatedAt])
+  @@index([pathway, status])
+}
+
+model InterviewResponse {
+  id                  String                  @id @default(cuid())
+  interviewId         String
+  interview           Interview               @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  questionId          String
+  rawAnswer           String
+  originalLanguage    String?
+  detectedLanguages   Json?
+  displayLanguage     String?
+  displayText         String?
+  normalizedAnswer    Json?
+  language            String
+  source              ClinicalSource          @default(PATIENT_REPORTED)
+  confidence          Float?
+  status              InterviewResponseStatus @default(CAPTURED)
+  verificationStatus  VerificationStatus      @default(PATIENT_REPORTED)
+  verificationVersion Int                     @default(0)
+  createdAt           DateTime                @default(now())
+  confirmedAt         DateTime?
+  updatedAt           DateTime                @updatedAt
+
+  @@index([interviewId, createdAt])
+  @@index([interviewId, questionId])
+  @@index([status, createdAt])
+}
+
+model AIInteraction {
+  id               String    @id @default(cuid())
+  interviewId      String
+  interview        Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  responseId       String?
+  provider         String
+  model            String?
+  inputType        String
+  validationStatus String
+  inputTokens      Int?
+  outputTokens     Int?
+  latencyMs        Int?
+  createdAt        DateTime  @default(now())
+
+  @@index([interviewId, createdAt])
+  @@index([validationStatus, createdAt])
+}
+
+model VoiceInteraction {
+  id                      String                 @id @default(cuid())
+  sessionId               String
+  session                 PatientSession         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  visitId                 String?
+  visit                   Visit?                 @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  language                String
+  detectedLanguage        String?
+  detectedLanguages       Json?
+  audioMetadata           Json?
+  originalTranscript      String?
+  normalizedTranscript    String?
+  patientEditedTranscript String?
+  acceptedTranscript      String?
+  confidence              Float?
+  provider                String
+  model                   String?
+  status                  VoiceInteractionStatus @default(RECORDING)
+  startedAt               DateTime               @default(now())
+  completedAt             DateTime?
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+
+  @@index([sessionId, createdAt])
+  @@index([visitId, createdAt])
+  @@index([status, createdAt])
+}
+
+model Observation {
+  id                  String             @id @default(cuid())
+  patientId           String
+  patient             PatientProfile     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitId             String?
+  visit               Visit?             @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  conceptKey          String
+  display             String
+  codeSystem          String?
+  code                String?
+  category            String?
+  value               Json?
+  unit                String?
+  referenceRange      Json?
+  state               KnowledgeState     @default(YES)
+  status              String             @default("FINAL")
+  effectiveAt         DateTime?
+  source              ClinicalSource
+  verificationStatus  VerificationStatus @default(UNREVIEWED)
+  verificationVersion Int                @default(0)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([patientId, effectiveAt])
+  @@index([visitId, category])
+  @@index([conceptKey, effectiveAt])
+  @@index([source, createdAt])
+}
+
+model ClinicalHistory {
+  id                  String             @id @default(cuid())
+  visitId             String             @unique
+  visit               Visit              @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  chiefComplaint      String
+  onset               Json?
+  duration            Json?
+  severity            String?
+  location            Json?
+  character           Json?
+  timing              Json?
+  aggravatingFactors  Json?
+  relievingFactors    Json?
+  associatedSymptoms  Json?
+  pastMedicalHistory  Json?
+  pastSurgicalHistory Json?
+  currentMedications  Json?
+  allergies           Json?
+  familyHistory       Json?
+  socialHistory       Json?
+  reviewOfSystems     Json?
+  additionalNotes     String?
+  source              ClinicalSource     @default(PATIENT_REPORTED)
+  verificationStatus  VerificationStatus @default(PATIENT_REPORTED)
+  verificationVersion Int                @default(0)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([createdAt])
+}
+
+model Symptom {
+  id                  String             @id @default(cuid())
+  visitId             String
+  visit               Visit              @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  name                String
+  normalizedName      String?
+  severity            String?
+  duration            Json?
+  location            Json?
+  onset               Json?
+  status              String?
+  source              ClinicalSource     @default(PATIENT_REPORTED)
+  verificationStatus  VerificationStatus @default(PATIENT_REPORTED)
+  verificationVersion Int                @default(0)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([visitId, source])
+  @@index([normalizedName])
+  @@index([createdAt])
+}
+
+model Medication {
+  id                  String             @id @default(cuid())
+  patientId           String
+  patient             PatientProfile     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitId             String?
+  visit               Visit?             @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  name                String
+  normalizedName      String?
+  dose                String?
+  frequency           String?
+  route               String?
+  source              ClinicalSource     @default(PATIENT_REPORTED)
+  verificationStatus  VerificationStatus @default(PATIENT_REPORTED)
+  verificationVersion Int                @default(0)
+  verifiedAt          DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([patientId, createdAt])
+  @@index([visitId])
+  @@index([normalizedName])
+}
+
+model Allergy {
+  id                  String             @id @default(cuid())
+  patientId           String
+  patient             PatientProfile     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitId             String?
+  visit               Visit?             @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  allergen            String
+  reaction            String?
+  severity            String?
+  source              ClinicalSource     @default(PATIENT_REPORTED)
+  verificationStatus  VerificationStatus @default(PATIENT_REPORTED)
+  verificationVersion Int                @default(0)
+  verifiedAt          DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([patientId, createdAt])
+  @@index([visitId])
+  @@index([allergen])
+}
+
+model MedicalDocument {
+  id                String                  @id @default(cuid())
+  patientId         String
+  patient           PatientProfile          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitId           String?
+  visit             Visit?                  @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  sessionId         String
+  session           PatientSession          @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  fileName          String
+  mimeType          String
+  storagePath       String
+  fileSize          Int
+  fileHash          String
+  documentType      DocumentType            @default(UNKNOWN)
+  pageCount         Int                     @default(1)
+  identityStatus    DocumentIdentityStatus  @default(PENDING)
+  documentDate      DateTime?
+  summary           String?
+  documentLanguage  String?
+  detectedLanguages Json?
+  uploadedAt        DateTime                @default(now())
+  uploadedBy        String
+  processingStatus  DocumentStatus          @default(UPLOADED)
+  extraction        DocumentExtraction?
+  pages             DocumentPage[]
+  facts             DocumentFact[]
+  jobs              DocumentProcessingJob[]
+  timelineEvents    TimelineEvent[]
+  ayushRecords      AyushRecord[]
+  deletedAt         DateTime?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  @@unique([patientId, fileHash])
+  @@index([patientId, uploadedAt])
+  @@index([visitId, processingStatus])
+  @@index([processingStatus, createdAt])
+  @@index([sessionId, createdAt])
+}
+
+model DocumentExtraction {
+  id                String           @id @default(cuid())
+  documentId        String           @unique
+  document          MedicalDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  rawText           String?
+  structuredData    Json?
+  confidence        Float?
+  provider          String?
+  model             String?
+  processingVersion String?
+  errorCode         String?
+  status            ExtractionStatus @default(PENDING)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model DocumentPage {
+  id                 String             @id @default(cuid())
+  documentId         String
+  document           MedicalDocument    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  pageNumber         Int
+  processedImagePath String?
+  ocrText            String?
+  width              Int?
+  height             Int?
+  confidence         Float?
+  processingStatus   DocumentStatus     @default(UPLOADED)
+  evidence           DocumentEvidence[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@unique([documentId, pageNumber])
+  @@index([documentId, processingStatus])
+}
+
+model DocumentFact {
+  id                  String             @id @default(cuid())
+  documentId          String
+  document            MedicalDocument    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  patientId           String
+  patient             PatientProfile     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitId             String?
+  visit               Visit?             @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  factType            String
+  originalValue       Json
+  normalizedValue     Json?
+  originalLanguage    String?
+  displayTranslation  String?
+  source              ClinicalSource     @default(DOCUMENT_EXTRACTED)
+  confidence          Float?
+  status              DocumentFactStatus @default(EXTRACTED)
+  verificationStatus  VerificationStatus @default(DOCUMENT_EXTRACTED)
+  verificationVersion Int                @default(0)
+  evidence            DocumentEvidence[]
+  timelineEvents      TimelineEvent[]
+  ayushRecord         AyushRecord?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([documentId, status])
+  @@index([patientId, factType])
+  @@index([visitId])
+}
+
+model AyushRecord {
+  id                         String                     @id @default(cuid())
+  patientId                  String
+  patient                    PatientProfile             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitId                    String?
+  visit                      Visit?                     @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  interviewId                String?                    @unique
+  interview                  Interview?                 @relation(fields: [interviewId], references: [id], onDelete: SetNull)
+  documentId                 String?
+  document                   MedicalDocument?           @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  documentFactId             String?                    @unique
+  documentFact               DocumentFact?              @relation(fields: [documentFactId], references: [id], onDelete: SetNull)
+  system                     AyushSystem
+  useStatus                  AyushUseStatus             @default(UNKNOWN)
+  practitionerName           String?
+  practitionerRegistrationId String?
+  facilityName               String?
+  treatmentName              String?
+  medicineName               String?
+  originalName               String
+  normalizedName             String?
+  ingredients                Json?
+  dosage                     String?
+  frequency                  String?
+  route                      String?
+  startDate                  DateTime?
+  endDate                    DateTime?
+  indicationAsReported       String?
+  patientReportedReason      String?
+  reportedEffect             String?
+  reportedEffectOnset        DateTime?
+  temporalRelationship       AyushTemporalRelationship?
+  originalStatement          String?
+  source                     ClinicalSource
+  verificationStatus         VerificationStatus         @default(NEEDS_REVIEW)
+  verificationVersion        Int                        @default(0)
+  evidenceReferences         Json
+  notes                      String?
+  createdAt                  DateTime                   @default(now())
+  updatedAt                  DateTime                   @updatedAt
+
+  @@index([patientId, useStatus, createdAt])
+  @@index([visitId, system])
+  @@index([system, verificationStatus])
+  @@index([documentId])
+  @@index([source, createdAt])
+}
+
+model DocumentEvidence {
+  id             String        @id @default(cuid())
+  documentFactId String
+  documentFact   DocumentFact  @relation(fields: [documentFactId], references: [id], onDelete: Cascade)
+  pageId         String?
+  page           DocumentPage? @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  pageNumber     Int
+  sourceText     String
+  boundingBox    Json?
+  confidence     Float?
+  createdAt      DateTime      @default(now())
+
+  @@index([documentFactId, pageNumber])
+  @@index([pageId])
+}
+
+model DocumentProcessingJob {
+  id          String          @id @default(cuid())
+  documentId  String
+  document    MedicalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  status      DocumentStatus  @default(UPLOADED)
+  progress    Int?
+  attempts    Int             @default(0)
+  errorCode   String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([documentId, createdAt])
+  @@index([status, createdAt])
+}
+
+model TimelineEvent {
+  id                 String                    @id @default(cuid())
+  patientId          String
+  patient            PatientProfile            @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitId            String?
+  visit              Visit?                    @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  documentId         String?
+  document           MedicalDocument?          @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  documentFactId     String?
+  documentFact       DocumentFact?             @relation(fields: [documentFactId], references: [id], onDelete: SetNull)
+  eventType          TimelineEventType
+  title              String
+  description        String?
+  eventDate          DateTime?
+  eventEndDate       DateTime?
+  datePrecision      TimelineDatePrecision     @default(UNKNOWN)
+  temporalState      TimelineTemporalState     @default(UNKNOWN)
+  medicationAction   TimelineMedicationAction?
+  source             TimelineSource
+  sourceType         String
+  sourceId           String
+  sourceText         String?
+  temporalText       String?
+  pageNumber         Int?
+  verificationStatus TimelineEventStatus       @default(CAPTURED)
+  confidence         Float?
+  originalValue      Json?
+  normalizedValue    Json?
+  groupKey           String?
+  normalizedKey      String
+  fingerprint        String                    @unique
+  conflictKey        String?
+  recordedAt         DateTime                  @default(now())
+  versions           TimelineEventVersion[]
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  @@index([patientId, eventDate, recordedAt])
+  @@index([patientId, eventType, eventDate])
+  @@index([patientId, source, eventDate])
+  @@index([patientId, verificationStatus, eventDate])
+  @@index([visitId, eventDate])
+  @@index([documentId, eventDate])
+  @@index([documentFactId])
+  @@index([groupKey, eventDate])
+  @@index([conflictKey])
+  @@index([createdAt])
+}
+
+model TimelineEventVersion {
+  id              String        @id @default(cuid())
+  timelineEventId String
+  timelineEvent   TimelineEvent @relation(fields: [timelineEventId], references: [id], onDelete: Cascade)
+  version         Int
+  snapshot        Json
+  changedAt       DateTime      @default(now())
+  changeReason    String
+
+  @@unique([timelineEventId, version])
+  @@index([timelineEventId, changedAt])
+}
+
+model RiskSignal {
+  id            String         @id @default(cuid())
+  visitId       String
+  visit         Visit          @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  category      String
+  severity      RiskSeverity
+  title         String
+  description   String
+  source        String
+  status        RiskStatus     @default(OPEN)
+  createdAt     DateTime       @default(now())
+  resolvedAt    DateTime?
+  changeRecords ChangeRecord[]
+
+  @@index([visitId, status])
+  @@index([severity, status])
+  @@index([createdAt])
+}
+
+model DoctorVerification {
+  id                 String               @id @default(cuid())
+  patientId          String
+  patient            PatientProfile       @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  visitId            String?
+  visit              Visit?               @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  factType           VerificationFactType
+  factId             String
+  action             VerificationAction
+  previousStatus     VerificationStatus
+  newStatus          VerificationStatus
+  originalValue      Json
+  verifiedValue      Json
+  status             VerificationStatus
+  sourceType         ClinicalSource
+  evidenceReferences Json
+  reason             String?
+  comment            String?
+  verifiedBy         String
+  verifier           User                 @relation("DoctorVerifications", fields: [verifiedBy], references: [id], onDelete: Restrict)
+  verifiedAt         DateTime             @default(now())
+  factVersion        Int
+  idempotencyKey     String               @unique
+  createdAt          DateTime             @default(now())
+
+  @@index([patientId, newStatus, verifiedAt])
+  @@index([visitId, newStatus])
+  @@index([factType, factId, verifiedAt])
+  @@index([verifiedBy, verifiedAt])
+}
+
+model ConsentRecord {
+  id          String          @id @default(cuid())
+  patientId   String?
+  patient     PatientProfile? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  sessionId   String
+  session     PatientSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  consentType String
+  accepted    Boolean
+  version     String
+  acceptedAt  DateTime        @default(now())
+  withdrawnAt DateTime?
+
+  @@unique([sessionId, consentType, version])
+  @@index([patientId, acceptedAt])
+  @@index([sessionId, accepted])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  actor       User?    @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?
+  requestId   String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorUserId, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@index([requestId])
+  @@index([createdAt])
+}
+
+model DoctorNote {
+  id        String         @id @default(cuid())
+  patientId String
+  patient   PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitId   String?
+  visit     Visit?         @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  authorId  String
+  author    User           @relation("DoctorNoteAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  content   String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([patientId, createdAt])
+  @@index([visitId, createdAt])
+  @@index([authorId, createdAt])
+}
+
+model DoctorPatientAssignment {
+  id        String         @id @default(cuid())
+  doctorId  String
+  doctor    User           @relation("AssignedDoctor", fields: [doctorId], references: [id], onDelete: Cascade)
+  patientId String
+  patient   PatientProfile @relation("AssignedPatient", fields: [patientId], references: [id], onDelete: Cascade)
+  active    Boolean        @default(true)
+  createdAt DateTime       @default(now())
+
+  @@unique([doctorId, patientId])
+  @@index([patientId, active])
+}
+
+enum QueueStatus {
+  WAITING
+  CALLED
+  IN_CONSULTATION
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  SKIPPED
+}
+
+enum QueuePriority {
+  NORMAL
+  PRIORITY_REVIEW
+}
+
+model QueueCounter {
+  id        String   @id @default(cuid())
+  queueKey  String
+  queueDate DateTime @db.Date
+  nextValue Int      @default(1)
+  paused    Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@unique([queueKey, queueDate])
+}
+
+model QueueEntry {
+  id                    String         @id @default(cuid())
+  queueKey              String
+  queueDate             DateTime       @db.Date
+  sequence              Int
+  tokenNumber           String
+  patientId             String
+  patient               PatientProfile @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  visitId               String         @unique
+  visit                 Visit          @relation(fields: [visitId], references: [id], onDelete: Restrict)
+  doctorId              String?
+  doctor                User?          @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  status                QueueStatus    @default(WAITING)
+  priority              QueuePriority  @default(NORMAL)
+  source                String         @default("PATIENT_INTAKE")
+  createdAt             DateTime       @default(now())
+  calledAt              DateTime?
+  consultationStartedAt DateTime?
+  completedAt           DateTime?
+  updatedAt             DateTime       @updatedAt
+  events                QueueEvent[]
+
+  @@unique([queueKey, queueDate, sequence])
+  @@index([queueKey, queueDate, status, priority, createdAt])
+  @@index([patientId, createdAt])
+}
+
+model QueueEvent {
+  id         String     @id @default(cuid())
+  tokenId    String
+  token      QueueEntry @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  action     String
+  actorId    String?
+  actorRole  String
+  occurredAt DateTime   @default(now())
+  metadata   Json?
+
+  @@index([tokenId, occurredAt])
+}
+
+model PatientSnapshot {
+  id                  String         @id @default(cuid())
+  patientId           String
+  patient             PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitId             String
+  visit               Visit          @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  snapshotVersion     String         @default("1.0.0")
+  sourceRevision      String
+  snapshotHash        String         @unique
+  facts               Json
+  eventCount          Int
+  sourceUpdatedAt     DateTime
+  generatedAt         DateTime       @default(now())
+  previousComparisons Comparison[]   @relation("PreviousComparisonSnapshot")
+  currentComparisons  Comparison[]   @relation("CurrentComparisonSnapshot")
+
+  @@unique([patientId, visitId, sourceRevision])
+  @@index([patientId, generatedAt])
+  @@index([visitId, sourceUpdatedAt])
+}
+
+model Comparison {
+  id                 String           @id @default(cuid())
+  patientId          String
+  patient            PatientProfile   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  previousVisitId    String
+  previousVisit      Visit            @relation("PreviousComparisonVisit", fields: [previousVisitId], references: [id], onDelete: Restrict)
+  currentVisitId     String
+  currentVisit       Visit            @relation("CurrentComparisonVisit", fields: [currentVisitId], references: [id], onDelete: Restrict)
+  previousSnapshotId String
+  previousSnapshot   PatientSnapshot  @relation("PreviousComparisonSnapshot", fields: [previousSnapshotId], references: [id], onDelete: Restrict)
+  currentSnapshotId  String
+  currentSnapshot    PatientSnapshot  @relation("CurrentComparisonSnapshot", fields: [currentSnapshotId], references: [id], onDelete: Restrict)
+  status             ComparisonStatus @default(GENERATED)
+  engineVersion      String
+  cacheKey           String           @unique
+  createdBy          String?
+  creator            User?            @relation("ComparisonCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  changes            ChangeRecord[]
+  clinicalBriefs     ClinicalBrief[]
+  createdAt          DateTime         @default(now())
+  reviewedAt         DateTime?
+  archivedAt         DateTime?
+
+  @@index([patientId, createdAt])
+  @@index([previousVisitId, currentVisitId])
+  @@index([status, createdAt])
+}
+
+model ChangeRecord {
+  id                         String               @id @default(cuid())
+  comparisonId               String
+  comparison                 Comparison           @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  entityType                 ComparisonEntityType
+  entityKey                  String
+  changeType                 ComparisonChangeType
+  reason                     String
+  fieldChanges               Json
+  previousValue              Json?
+  currentValue               Json?
+  previousEventId            String?
+  currentEventId             String?
+  previousSource             TimelineSource?
+  currentSource              TimelineSource?
+  previousVerificationStatus TimelineEventStatus?
+  currentVerificationStatus  TimelineEventStatus?
+  previousEvidence           Json?
+  currentEvidence            Json?
+  matchConfidence            MatchConfidence      @default(HIGH)
+  needsReview                Boolean              @default(false)
+  explanation                String
+  relatedRiskSignalId        String?
+  relatedRiskSignal          RiskSignal?          @relation(fields: [relatedRiskSignalId], references: [id], onDelete: SetNull)
+  fingerprint                String
+  createdAt                  DateTime             @default(now())
+
+  @@unique([comparisonId, fingerprint])
+  @@index([comparisonId, changeType])
+  @@index([comparisonId, entityType])
+  @@index([comparisonId, needsReview])
+  @@index([previousEventId])
+  @@index([currentEventId])
+  @@index([relatedRiskSignalId])
+}
+
+model ClinicalBrief {
+  id                String              @id @default(cuid())
+  patientId         String
+  patient           PatientProfile      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitId           String
+  visit             Visit               @relation(fields: [visitId], references: [id], onDelete: Restrict)
+  comparisonId      String?
+  comparison        Comparison?         @relation(fields: [comparisonId], references: [id], onDelete: SetNull)
+  generatedAt       DateTime            @default(now())
+  generatorVersion  String
+  sourceRevision    String
+  cacheKey          String              @unique
+  version           Int                 @default(1)
+  status            ClinicalBriefStatus @default(GENERATED)
+  sections          Json
+  sourceReferences  Json
+  createdBy         String?
+  creator           User?               @relation("BriefCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  previousVersionId String?
+  previousVersion   ClinicalBrief?      @relation("BriefVersions", fields: [previousVersionId], references: [id], onDelete: SetNull)
+  nextVersions      ClinicalBrief[]     @relation("BriefVersions")
+  claims            BriefClaim[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  reviewedAt        DateTime?
+  archivedAt        DateTime?
+
+  @@unique([patientId, visitId, sourceRevision, generatorVersion])
+  @@index([patientId, visitId, createdAt])
+  @@index([status, createdAt])
+  @@index([comparisonId])
+  @@index([previousVersionId])
+}
+
+model BriefClaim {
+  id                 String              @id @default(cuid())
+  briefId            String
+  brief              ClinicalBrief       @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  sectionType        BriefSectionType
+  position           Int
+  claimKey           String
+  text               String
+  structuredValue    Json?
+  sourceType         String
+  sourceId           String
+  evidenceReferences Json
+  verificationStatus TimelineEventStatus
+  confidence         Float?
+  needsVerification  Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+
+  @@unique([briefId, claimKey])
+  @@index([briefId, sectionType, position])
+  @@index([sourceType, sourceId])
+  @@index([needsVerification])
+}

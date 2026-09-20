@@ -1,0 +1,77 @@
+{
+  "synthetic": true,
+  "generatedAt": "2026-09-09T00:00:00.000Z",
+  "disclaimer": "Synthetic test documents only; no clinical validation or real patient data.",
+  "fixtures": [
+    {
+      "fileName": "demo-previous-lab-report.pdf",
+      "difficulty": "clean-digital",
+      "pages": 1
+    },
+    {
+      "fileName": "demo-current-lab-report.pdf",
+      "difficulty": "clean-digital",
+      "pages": 1
+    },
+    {
+      "fileName": "demo-allergy-note.pdf",
+      "difficulty": "clean-digital",
+      "pages": 1
+    },
+    {
+      "fileName": "prescription.pdf",
+      "difficulty": "clean-digital",
+      "pages": 1
+    },
+    {
+      "fileName": "lab-report.png",
+      "difficulty": "clean-image",
+      "pages": 1
+    },
+    {
+      "fileName": "discharge-summary.pdf",
+      "difficulty": "multi-page",
+      "pages": 2
+    },
+    {
+      "fileName": "low-quality-scan.jpg",
+      "difficulty": "degraded",
+      "pages": 1
+    },
+    {
+      "fileName": "rotated-prescription.jpg",
+      "difficulty": "rotated",
+      "pages": 1
+    },
+    {
+      "fileName": "handwritten-like-note.png",
+      "difficulty": "handwritten-like",
+      "pages": 1
+    },
+    {
+      "fileName": "ambiguous-ocr.png",
+      "difficulty": "degraded",
+      "pages": 1
+    },
+    {
+      "fileName": "missing-date.pdf",
+      "difficulty": "clean-digital",
+      "pages": 1
+    },
+    {
+      "fileName": "multiple-medications.pdf",
+      "difficulty": "clean-digital",
+      "pages": 1
+    },
+    {
+      "fileName": "multiple-lab-values.pdf",
+      "difficulty": "clean-digital",
+      "pages": 1
+    },
+    {
+      "fileName": "duplicate-upload.pdf",
+      "difficulty": "duplicate",
+      "duplicateOf": "prescription.pdf"
+    }
+  ]
+}

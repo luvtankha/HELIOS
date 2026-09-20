@@ -1,0 +1,14 @@
+node_modules
+reference
+dataset/generated
+dataset/train
+dataset/validation
+dataset/test
+dataset/evaluation
+dataset/documents
+dataset/conversations
+dataset/timelines
+.next
+dist
+coverage
+pnpm-lock.yaml

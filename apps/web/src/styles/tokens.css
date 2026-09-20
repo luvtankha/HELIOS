@@ -1,0 +1,77 @@
+:root {
+  --helios-navy: #102b46;
+  --helios-ink: #17344d;
+  --helios-blue: #17678b;
+  --helios-teal: #087d72;
+  --helios-surface: #ffffff;
+  --helios-canvas: #f6f8f7;
+  --helios-border: #dbe4e5;
+  --helios-muted: #526878;
+  --helios-positive: #216b52;
+  --helios-attention: #8b5c13;
+  --helios-priority: #a53636;
+  --helios-radius-sm: 0.75rem;
+  --helios-radius-card: 1.25rem;
+  --helios-space-1: 0.25rem;
+  --helios-space-2: 0.5rem;
+  --helios-space-3: 0.75rem;
+  --helios-space-4: 1rem;
+  --helios-space-6: 1.5rem;
+  --helios-space-8: 2rem;
+  --helios-input-height: 3.25rem;
+  --helios-touch-height: 3.5rem;
+  --helios-shadow: 0 8px 28px rgb(16 43 70 / 6%);
+  --helios-ease: 180ms ease;
+}
+
+.helios-card {
+  border: 1px solid var(--helios-border);
+  border-radius: var(--helios-radius-card);
+  background: var(--helios-surface);
+  box-shadow: var(--helios-shadow);
+}
+
+.helios-field {
+  min-height: var(--helios-input-height);
+  border: 1px solid var(--helios-border);
+  border-radius: var(--helios-radius-sm);
+  background: var(--helios-surface);
+  padding: 0.75rem 1rem;
+  color: var(--helios-ink);
+}
+
+.helios-field:focus-visible {
+  border-color: var(--helios-blue);
+}
+
+.helios-button-primary {
+  min-height: var(--helios-touch-height);
+  border-radius: var(--helios-radius-sm);
+  background: var(--helios-navy);
+  color: white;
+  font-weight: 700;
+  transition: background var(--helios-ease);
+}
+
+.helios-button-primary:hover:not(:disabled) {
+  background: var(--helios-blue);
+}
+
+.helios-button-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.helios-eyebrow {
+  color: var(--helios-teal);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --helios-radius-card: 1rem;
+  }
+}

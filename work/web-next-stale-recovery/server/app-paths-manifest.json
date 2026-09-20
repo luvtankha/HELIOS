@@ -1,0 +1,7 @@
+{
+  "/patient/details/page": "app/patient/details/page.js",
+  "/patient/complaint/page": "app/patient/complaint/page.js",
+  "/patient/interview/page": "app/patient/interview/page.js",
+  "/patient/page": "app/patient/page.js",
+  "/patient/consent/page": "app/patient/consent/page.js"
+}

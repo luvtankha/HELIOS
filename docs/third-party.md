@@ -1,0 +1,5 @@
+# Third-party software and references
+
+Runtime dependencies are declared in workspace `package.json` files and locked by `pnpm-lock.yaml`. Major actual libraries include Next.js 15/React/Tailwind for web UI; Express 5, Zod, Helmet, CORS and Pino for API/validation/security headers/logging; Prisma 6/PostgreSQL for persistence; Sharp, PDF.js and Tesseract.js for local document processing; and optional OpenAI HTTP adapters for speech/clinical NLU. Tests use Vitest, Testing Library, Supertest, Playwright and axe-core. Exact resolved versions come from the lockfile and must be reviewed with `pnpm audit`/license tooling before deployment.
+
+Files under `docs/reference` analyze OpenMRS, OpenEMR, MTS-Dialog, Synthea and an Indic speech dataset. They are design references, not proof that HELIOS incorporates or is based entirely on those projects. HELIOS application services, UI and deterministic engines in this repository are project implementation. Review each upstream license before redistributing imported source/data; the repository does not supply a blanket licensing conclusion.

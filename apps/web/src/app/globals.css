@@ -1,0 +1,92 @@
+@import "../styles/tokens.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --background: var(--helios-canvas);
+  --foreground: var(--helios-ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family:
+    Inter, "Noto Sans Devanagari", "Nirmala UI", "Segoe UI", Arial, sans-serif;
+  line-height: 1.5;
+}
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+:focus-visible {
+  outline: 3px solid #b67513;
+  outline-offset: 3px;
+}
+.font-serif {
+  font-family: inherit;
+  letter-spacing: -0.025em;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+::selection {
+  background: #bce8df;
+  color: #0b2748;
+}
+
+.select-field {
+  width: 100%;
+  min-height: var(--helios-input-height);
+  border: 1px solid var(--helios-border);
+  border-radius: var(--helios-radius-sm);
+  background: var(--helios-surface);
+  padding: 0 12px;
+  color: var(--helios-ink);
+}
+
+.comparison-value {
+  overflow-wrap: anywhere;
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    transform: scaleY(0.48);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.wave-bar {
+  animation: wave 1.05s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

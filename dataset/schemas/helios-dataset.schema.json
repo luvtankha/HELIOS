@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://helios.example/schemas/dataset-v1.json",
+  "title": "HELIOS synthetic dataset records",
+  "$defs": {
+    "source": {
+      "enum": [
+        "PATIENT_REPORTED",
+        "AI_STRUCTURED",
+        "DOCUMENT_EXTRACTED",
+        "DOCTOR_VERIFIED",
+        "SYSTEM_GENERATED"
+      ]
+    },
+    "state": {
+      "enum": [
+        "YES",
+        "NO",
+        "UNKNOWN",
+        "NOT_ASKED",
+        "NOT_APPLICABLE",
+        "CONFLICT"
+      ]
+    },
+    "split": { "enum": ["train", "validation", "test"] },
+    "patient": {
+      "type": "object",
+      "required": [
+        "id",
+        "synthetic",
+        "age",
+        "sex",
+        "state",
+        "region",
+        "context",
+        "preferredLanguage",
+        "split"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^pat-" },
+        "synthetic": { "const": true },
+        "age": { "type": "integer", "minimum": 0, "maximum": 120 },
+        "preferredLanguage": { "enum": ["en", "hi", "hi-Latn"] },
+        "split": { "$ref": "#/$defs/split" }
+      }
+    },
+    "visit": {
+      "type": "object",
+      "required": [
+        "id",
+        "patientId",
+        "date",
+        "caseType",
+        "chiefComplaint",
+        "source",
+        "split"
+      ],
+      "properties": {
+        "source": { "$ref": "#/$defs/source" },
+        "split": { "$ref": "#/$defs/split" }
+      }
+    },
+    "clinicalFact": {
+      "type": "object",
+      "required": [
+        "id",
+        "patientId",
+        "visitId",
+        "field",
+        "value",
+        "state",
+        "source",
+        "confidence",
+        "effectiveAt"
+      ],
+      "properties": {
+        "state": { "$ref": "#/$defs/state" },
+        "source": { "$ref": "#/$defs/source" },
+        "confidence": { "enum": ["HIGH", "MEDIUM", "LOW"] }
+      }
+    },
+    "conversation": {
+      "type": "object",
+      "required": [
+        "id",
+        "patientId",
+        "visitId",
+        "language",
+        "difficulty",
+        "split",
+        "turns",
+        "expectedHistory"
+      ],
+      "properties": {
+        "language": { "enum": ["en", "hi", "hi-Latn"] },
+        "split": { "$ref": "#/$defs/split" },
+        "turns": { "type": "array", "minItems": 2 }
+      }
+    },
+    "document": {
+      "type": "object",
+      "required": [
+        "id",
+        "patientId",
+        "visitId",
+        "documentType",
+        "synthetic",
+        "syntheticText",
+        "expectedEntities",
+        "difficulty"
+      ],
+      "properties": { "synthetic": { "const": true } }
+    },
+    "timelineEvent": {
+      "type": "object",
+      "required": [
+        "id",
+        "patientId",
+        "visitId",
+        "eventDate",
+        "eventType",
+        "title",
+        "source"
+      ],
+      "properties": { "source": { "$ref": "#/$defs/source" } }
+    }
+  }
+}

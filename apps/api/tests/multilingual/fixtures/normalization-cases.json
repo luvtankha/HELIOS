@@ -1,0 +1,29 @@
+[
+  {
+    "name": "English abdominal pain",
+    "language": "en",
+    "text": "I have abdominal pain for three days",
+    "conceptId": "SYMPTOM_ABDOMINAL_PAIN",
+    "durationDays": 3
+  },
+  {
+    "name": "Hindi abdominal pain",
+    "language": "hi",
+    "text": "पेट में दर्द तीन दिन से है",
+    "conceptId": "SYMPTOM_ABDOMINAL_PAIN",
+    "durationDays": 3
+  },
+  {
+    "name": "Hinglish abdominal pain",
+    "language": "hi",
+    "text": "Pet mein three days se pain hai",
+    "conceptId": "SYMPTOM_ABDOMINAL_PAIN",
+    "durationDays": 3
+  },
+  {
+    "name": "Ambiguous Hindi",
+    "language": "hi",
+    "text": "पेट खराब है",
+    "needsClarification": true
+  }
+]

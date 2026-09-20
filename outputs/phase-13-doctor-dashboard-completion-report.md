@@ -1,0 +1,14 @@
+# Phase 13 — Doctor Dashboard completion report
+
+1. **Files created/modified:** New doctor dashboard service/repository/controller/router/validation/factory, Next.js doctor home/login/workspace/layout/auth/shell/API client, shared DTOs, `DoctorNote` and assignment migrations, synthetic seed, tests and documentation. See `outputs/HELIOS-PHASE-13-DOCTOR-WORKSPACE.txt` for exact paths.
+2. **Frontend architecture:** Separate `/doctor/*` route tree and layout; patient routes remain `/patient/*`. Typed doctor API client, session provider, responsive sidebar and eight workspace tabs.
+3. **Backend/API changes:** Bounded assigned-doctor queue/search/metrics/notifications, aggregated workspace, notes and guarded consultation transitions. Existing Phase 6–12 services are reused.
+4. **Authentication/RBAC:** Signed doctor proof plus active DOCTOR/ADMIN lookup; Phase 13 patient assignment checks; no browser role/doctor ID authority. Demo credential flow is not production authentication.
+5. **Screens:** Login, dashboard, patient workspace tabs; existing Verification Center and AYUSH views are linked. Messages/Reports/Knowledge Base/Settings remain disabled placeholders.
+6. **API integrations:** Clinical Brief, What Changed, stored RiskSignal, documents/evidence, Timeline, interview state, verification history and existing verification actions.
+7. **Database:** `DoctorNote` and `DoctorPatientAssignment`; transactional note/status audit writes; synthetic assigned patients and signal/note seed.
+8. **Tests executed:** 217 API tests passed, 5 DB-gated skipped; 29 web tests passed. Schema validation/generation, typecheck, lint and production build passed. PostgreSQL not configured, so migration/seed/live UI were not executed here.
+9. **Security checks:** Missing/tampered/patient proofs rejected in tests; unassigned doctor denied in tests; note author and transition guards. Earlier doctor endpoints do not yet enforce Phase 13 assignment policy, a multi-clinician deployment blocker.
+10. **Remaining TODOs:** Production identity/session policy, authorization unification for earlier doctor endpoints, real scheduling and notifications, document-view audit, genuine stored demo document bytes, fuller timeline filters and browser/DB visual/integration QA. Phase 5 SafetyEngine remains absent; only stored signals are shown.
+11. **Run commands:** `pnpm install`, configure `.env`/`DATABASE_URL`, `pnpm db:generate`, `pnpm db:migrate`, `pnpm db:seed`, `pnpm dev`; checks: `pnpm db:validate`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`.
+12. **Screenshot/demo:** After PostgreSQL setup, open `http://localhost:3000/doctor`, sign in as `demo.doctor` with the configured demo access code, open Aarav from the queue, show each tab and the Verification Center. Capture 1280/1440/1920 desktop and tablet views. No screenshot is claimed from this unconfigured environment.

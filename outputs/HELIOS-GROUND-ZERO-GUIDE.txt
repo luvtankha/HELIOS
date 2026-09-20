@@ -1,0 +1,1577 @@
+HELIOS PROJECT GUIDE FROM GROUND ZERO
+=====================================
+
+Snapshot covered: implementation through Phase 12
+Project name: HELIOS - Healthcare Enabled Language & Intelligent Observation System
+Proposal context: Smart India Hackathon 2026, SIH26047
+Repository type: pnpm TypeScript monorepo
+Primary purpose: consent-first pre-consultation case taking that helps a patient describe their health story and helps a doctor review structured, source-aware information.
+
+IMPORTANT SAFETY STATEMENT
+--------------------------
+
+HELIOS is an information-capture, organization, comparison, and human-review system. It is not a diagnosis system, prescription system, treatment recommender, autonomous triage tool, medical device, or proof of regulatory compliance. Phase 5 SafetyEngine is NOT implemented. RiskSignal exists as a storage/read model only. Existing stored risk information may be displayed, but this code does not calculate clinical risk.
+
+This guide describes the actual checked-out code. It does not treat plans in old documents as implemented features.
+
+
+1. THE ONE-PARAGRAPH MENTAL MODEL
+---------------------------------
+
+A patient opens the Next.js web app, starts or resumes a signed session, selects English or Hindi, explicitly consents, enters basic details and a chief complaint, and completes a deterministic adaptive interview by text, choices, or confirmed speech. Optional medical documents can be uploaded to private storage, processed with bounded OCR/extraction, and reviewed fact by fact. Confirmed information is stored in PostgreSQL through Prisma with explicit provenance and knowledge states. A rebuildable timeline projects source records without replacing them. Doctors can compare two visits, read a short evidence-linked Clinical Brief, verify/correct/reject facts through an immutable action ledger, and review AYUSH use. A multilingual layer separates original source content, language-neutral facts, and replaceable display translations. Every important boundary favors unknown, conflict, clarification, evidence, and human confirmation over unsupported certainty.
+
+
+2. CURRENT PHASE STATUS
+-----------------------
+
+Phase 0       COMPLETE  Workspace, configuration, health checks, logging, error handling, security foundation.
+Phases 1-2    COMPLETE  Domain schema, repositories, APIs, synthetic seed, patient journey.
+Phase 3       COMPLETE  Browser voice recording, provider-neutral transcription, edit/confirmation, transcript persistence.
+Phase 4       COMPLETE  Deterministic adaptive interview, bounded clinical NLU, autosave/resume, structured history.
+Reference     COMPLETE  OpenEMR/OpenMRS/Synthea/MTS-Dialog/Indic-speech analysis and synthetic evaluation corpus.
+Phase 5       MISSING   SafetyEngine/risk evaluation was deliberately not recreated in later phases.
+Phase 6       COMPLETE  Private document upload, OCR/extraction, evidence, patient fact review.
+Phase 7       COMPLETE  Rebuildable longitudinal patient timeline.
+Phase 8       COMPLETE  Deterministic doctor-facing What Changed comparisons.
+Phase 9       COMPLETE  Structured, source-linked Clinical Brief.
+Phase 10      COMPLETE  Authorized doctor verification and immutable decision history.
+Phase 11      COMPLETE  Neutral AYUSH information capture and integration.
+Phase 12      COMPLETE  English/Hindi language layer, detection, bounded normalization, display translation metadata.
+Phase 13+     NOT STARTED.
+
+
+3. TECHNOLOGY STACK
+-------------------
+
+Workspace/build:
+  - pnpm workspaces
+  - TypeScript with strict checks
+  - ESLint
+  - Prettier
+
+Web application:
+  - Next.js 15 App Router
+  - React 19
+  - Tailwind CSS 3
+  - Browser MediaRecorder and Web Audio APIs
+
+API application:
+  - Node.js
+  - Express 5
+  - Zod request/config validation
+  - Helmet security headers
+  - CORS
+  - Pino/Pino HTTP structured logging
+  - Multer multipart handling
+
+Data:
+  - PostgreSQL 15+
+  - Prisma ORM/Prisma Client
+  - Additive SQL migrations
+
+Document processing:
+  - pdfjs-dist for PDFs
+  - Sharp for image processing
+  - Tesseract.js for local OCR
+  - Mock provider for deterministic development/tests
+
+Optional providers:
+  - OpenAI speech transcription adapter
+  - OpenAI strict structured clinical-NLU adapter
+  - Both are server-selected and optional; local deterministic defaults exist.
+
+Testing:
+  - Vitest
+  - Testing Library + jsdom for React
+  - Supertest for HTTP APIs
+
+
+4. TOP-LEVEL REPOSITORY MAP
+---------------------------
+
+apps/web/
+  The Next.js patient and doctor user interfaces. Browser state, pages, reusable components, and typed HTTP clients live here.
+
+apps/api/
+  The Express server, domain services, deterministic engines, provider adapters, repositories, validation, security proof services, serializers, Prisma schema/migrations, seed, and API tests.
+
+packages/shared/
+  Contracts shared by browser and API: DTOs, enums/types, response shapes, language registry, locale resources.
+
+docs/
+  Architecture and phase-specific design documentation. Important groups are document-ai, timeline, comparison, clinical-brief, verification, ayush, multilingual, and reference.
+
+outputs/
+  Phase completion reports, the detailed flowchart, and this guide.
+
+dataset/
+  Original deterministic synthetic records, conversations, facts, summaries, documents, timelines, evaluation cases, train/validation/test splits, schemas, CSV/JSON/JSONL/FHIR-like exports, and binary Document AI fixtures.
+
+reference/
+  Read-only extracted upstream reference projects/data used for architecture study. HELIOS does not build these projects and does not copy their implementation into its runtime.
+
+scripts/
+  Dataset generator/validator, document fixture generator, and locale validator.
+
+work/
+  Task/development support files, not production application code.
+
+Root files:
+  package.json          Root scripts and workspace development dependencies.
+  pnpm-workspace.yaml   Workspace package discovery.
+  pnpm-lock.yaml        Dependency lock.
+  tsconfig.base.json    Shared strict TypeScript settings.
+  .env.example          Development configuration template.
+  README.md             Quick project overview and endpoint/command inventory.
+
+
+5. APPLICATION BOOT SEQUENCE
+----------------------------
+
+API:
+  1. apps/api/src/config/env.ts reads and validates environment variables.
+  2. PrismaDatabaseService creates the shared Prisma client wrapper.
+  3. Provider factories choose mock/local/OpenAI behavior from server config.
+  4. createApp() composes patient, voice, interview, document, timeline, comparison, brief, verification, AYUSH, and language services.
+  5. Express disables x-powered-by.
+  6. Middleware installs request IDs, structured logging, Helmet, CORS, and 1 MB JSON/form limits.
+  7. Health routes and all /api/v1 routers are mounted.
+  8. Not-found and centralized error middleware are installed last.
+  9. server.ts listens on PORT, sets request/header/keep-alive timeouts, and disconnects Prisma on SIGINT/SIGTERM.
+
+Web:
+  1. Next.js serves the root role-selection page and patient/doctor routes.
+  2. PatientLayout wraps patient pages in PatientFlowProvider.
+  3. PatientFlowProvider hydrates identifiers/navigation from localStorage and temporary form drafts from sessionStorage.
+  4. Typed service modules call NEXT_PUBLIC_API_URL.
+  5. Server session DTOs rehydrate authoritative patient/visit/progress data.
+  6. The shared language registry and useTranslation select supported display strings.
+
+
+6. WEB ROUTES AND WHAT EACH ONE DOES
+------------------------------------
+
+/
+  Landing/role entry. Patient continues to /patient. Doctor entry currently leads to the available doctor/demo surfaces.
+
+/patient
+  Patient welcome. Starts a new server session or resumes a persisted session at its authoritative current step.
+
+/patient/language
+  Selects English or Hindi. Future languages are displayed as coming soon. Mid-flow language changes keep the current step and answers.
+
+/patient/consent
+  Explains privacy/use boundaries and requires explicit checkbox acceptance before a versioned ConsentRecord is written.
+
+/patient/details
+  Collects full name, age, sex, and optional phone. Validates friendly constraints and atomically creates the PatientProfile, initial Visit, and session binding.
+
+/patient/complaint
+  Captures the chief complaint in the patient's own words by text or confirmed voice. Starts the adaptive interview.
+
+/patient/listening
+  Runs the browser recording state machine or text fallback. Shows local amplitude/timer, uploads bounded audio, then requires transcript review/edit/confirmation.
+
+/patient/interview
+  Shows one server-selected question at a time. Supports choice, multiple choice, duration, severity, text, date, yes/no, and voice. Displays normalized previews, clarification, completeness, and pre-final revision.
+
+/patient/documents
+  Optional camera/file upload. Previews files, processes OCR, reports failure/mismatch safely, shows extracted facts/evidence, and allows confirm/edit/reject.
+
+/patient/review
+  Final editable patient summary. No submission occurs until the patient explicitly submits.
+
+/patient/complete
+  Shows the visit token, explains what happens next, links to the patient timeline, and can clear the local session.
+
+/patient/timeline
+  Lists authorized patient timeline events with server filters/cursor pagination and evidence details.
+
+/doctor/what-changed
+  Demo doctor comparison workspace. Selects patient/visits, generates deterministic changes, hides unchanged by default, and opens evidence.
+
+/doctor/patients/[patientId]/brief
+  Doctor Clinical Brief with structured sections, provenance, unavailable/stale states, claim evidence, review/archive/refresh, and language control.
+
+/doctor/verification
+  Verification Center queue, detail, side-by-side source/current facts, conflict handling, and explicit verification actions.
+
+/doctor/patients/[patientId]/ayush
+  Doctor AYUSH case view and entry form with original/normalized information, evidence/provenance, and language control.
+
+/doctor-coming-soon
+  Placeholder for production doctor entry/authentication that is not yet built.
+
+
+7. BROWSER STATE AND STORAGE
+----------------------------
+
+PatientFlowProvider is the main browser state coordinator.
+
+In-memory fields:
+  hydrated, sessionId, sessionToken, patientId, visitId, interviewId,
+  pendingQuestionId, currentStep, language, details, complaint, answers,
+  tokenNumber, submittedAt.
+
+localStorage key: helios.patient.session.v1
+  Stores only session/navigation identifiers and opaque proof material:
+  sessionId, sessionToken, patientId, visitId, interviewId,
+  pendingQuestionId, currentStep, language.
+
+sessionStorage key: helios.patient.draft.v1
+  Stores temporary browser drafts:
+  details, complaint, answers.
+
+PostgreSQL is authoritative. Browser persistence enables reload/recovery but does not replace server ownership/status checks. Reset removes both storage keys.
+
+PatientFlowStep to route mapping:
+  WELCOME          /patient
+  LANGUAGE         /patient/language
+  CONSENT          /patient/consent
+  BASIC_INFO       /patient/details
+  CHIEF_COMPLAINT  /patient/complaint
+  INTERVIEW        /patient/interview
+  REVIEW           /patient/review
+  SUBMITTED        /patient/review
+  COMPLETE         /patient/complete
+
+
+8. API ARCHITECTURE RULE
+------------------------
+
+The normal dependency direction is:
+
+  route -> validation/upload middleware -> controller -> service/engine -> repository -> Prisma -> PostgreSQL
+
+Routes define URLs and middleware order.
+Validation modules treat every body/parameter/query as untrusted.
+Controllers translate HTTP requests and write standard response envelopes.
+Services enforce workflow, authorization/ownership, transactions, and cross-domain orchestration.
+Engines perform deterministic domain calculations.
+Repositories contain Prisma reads/writes and transaction details.
+Serializers prevent raw Prisma/private provider/storage details from leaking to clients.
+Shared DTOs keep web/API contracts consistent.
+
+Successful envelope:
+  { "success": true, "data": ... }
+
+Error envelope:
+  { "success": false, "error": { "code": "...", "message": "...", "requestId": "..." } }
+
+
+9. API ENDPOINT INVENTORY
+-------------------------
+
+Health:
+  GET    /health
+  GET    /api/v1/health
+
+Patient/session/visit:
+  GET    /api/v1/patients
+  POST   /api/v1/patients
+  GET    /api/v1/patients/:id
+  POST   /api/v1/patient-sessions
+  GET    /api/v1/patient-sessions/:id
+  PATCH  /api/v1/patient-sessions/:id/progress
+  POST   /api/v1/patient-sessions/:id/submit
+  POST   /api/v1/consents
+  POST   /api/v1/visits
+  GET    /api/v1/visits/:id
+  PATCH  /api/v1/visits/:id/complaint
+
+Voice:
+  POST   /api/v1/voice/transcribe
+  GET    /api/v1/voice/:id
+  POST   /api/v1/voice/:id/edit
+  POST   /api/v1/voice/:id/confirm
+
+Interview:
+  POST   /api/v1/interviews
+  GET    /api/v1/interviews/:id
+  GET    /api/v1/interviews/:id/current-question
+  POST   /api/v1/interviews/:id/response
+  POST   /api/v1/interviews/:id/confirm
+  POST   /api/v1/interviews/:id/revise
+  POST   /api/v1/interviews/:id/complete
+
+Documents:
+  POST   /api/v1/documents
+  GET    /api/v1/patients/:patientId/documents
+  GET    /api/v1/documents/:id
+  GET    /api/v1/documents/:id/content
+  POST   /api/v1/documents/:id/process
+  GET    /api/v1/documents/:id/status
+  GET    /api/v1/documents/:id/extraction
+  GET    /api/v1/documents/:id/facts
+  POST   /api/v1/documents/:id/facts/:factId/confirm
+  POST   /api/v1/documents/:id/facts/:factId/edit
+  POST   /api/v1/documents/:id/facts/:factId/reject
+  POST   /api/v1/documents/:id/identity/override
+  DELETE /api/v1/documents/:id
+
+Timeline:
+  GET    /api/v1/patients/:patientId/timeline
+  POST   /api/v1/patients/:patientId/timeline/rebuild
+  GET    /api/v1/timeline/:eventId
+
+Doctor demo and comparison:
+  POST   /api/v1/doctor-sessions
+  GET    /api/v1/doctor/patients
+  POST   /api/v1/patients/:patientId/comparisons
+  POST   /api/v1/patients/:patientId/comparisons/quick
+  GET    /api/v1/patients/:patientId/comparisons
+  GET    /api/v1/comparisons/:id
+  GET    /api/v1/comparisons/:id/changes
+  GET    /api/v1/comparisons/:id/changes/:changeId
+
+Clinical Brief:
+  POST   /api/v1/patients/:patientId/briefs
+  GET    /api/v1/patients/:patientId/briefs
+  GET    /api/v1/patients/:patientId/clinical-brief
+  GET    /api/v1/briefs/:briefId
+  POST   /api/v1/briefs/:briefId/refresh
+  GET    /api/v1/briefs/:briefId/evidence
+  GET    /api/v1/briefs/:briefId/claims/:claimId
+  POST   /api/v1/briefs/:briefId/review
+  POST   /api/v1/briefs/:briefId/archive
+
+Doctor verification:
+  GET    /api/v1/verification-queue
+  GET    /api/v1/patients/:patientId/verification-queue
+  GET    /api/v1/patients/:patientId/verification-history
+  POST   /api/v1/verification/bulk-verify
+  GET    /api/v1/verification/documents/:documentId/content
+  GET    /api/v1/verification/documents/:documentId
+  GET    /api/v1/verification/:verificationId
+  POST   /api/v1/verification/:verificationId/verify
+  POST   /api/v1/verification/:verificationId/correct
+  POST   /api/v1/verification/:verificationId/reject
+  POST   /api/v1/verification/:verificationId/uncertain
+  POST   /api/v1/verification/:verificationId/confirm-current
+  POST   /api/v1/verification/:verificationId/keep-previous
+
+AYUSH:
+  GET    /api/v1/patients/:patientId/ayush
+  POST   /api/v1/patients/:patientId/ayush
+  GET    /api/v1/doctor/patients/:patientId/ayush
+  POST   /api/v1/doctor/patients/:patientId/ayush
+  GET    /api/v1/doctor/ayush/:recordId
+
+Language:
+  GET    /api/v1/languages
+  GET    /api/v1/languages/:code
+  POST   /api/v1/language/detect
+  POST   /api/v1/language/normalize
+  POST   /api/v1/translate
+  PUT    /api/v1/doctor/language
+
+Authentication notes:
+  - Patient-sensitive endpoints use x-session-token where the router/service requires it.
+  - Doctor endpoints use x-doctor-token and active doctor/admin checks.
+  - Language registry reads and health checks are public.
+  - Never infer that every early demo CRUD route is production-secure; production identity/care-team authorization is postponed.
+
+
+10. PATIENT FLOW IN DETAIL
+--------------------------
+
+New session:
+  - POST /patient-sessions creates PatientSession with English default.
+  - SessionProofService signs an opaque token using SESSION_TOKEN_SECRET.
+  - The client stores token and session ID for subsequent ownership-bound work.
+
+Language:
+  - Initial LANGUAGE progress advances to CONSENT.
+  - A later language switch keeps currentStep unchanged.
+  - When a patient already exists, SessionRepository synchronizes preferredLanguage.
+
+Consent:
+  - Checkbox must be explicit; API schema only accepts accepted=true.
+  - ConsentRecord stores type, version, time, session, and optional patient link.
+  - Session advances to BASIC_INFO.
+
+Details:
+  - Name uses Unicode-aware validation.
+  - Age must be an integer from 0 through 120.
+  - Sex is a controlled enum.
+  - Phone is optional and format-bounded.
+  - IntakeRepository creates patient and visit and binds the session transactionally.
+
+Complaint:
+  - Original patient wording is stored as chiefComplaint.
+  - Simple health-detail fields may also be persisted.
+  - Changing complaint in browser state clears an existing interview ID so the pathway is not silently reused.
+
+Interview:
+  - Server classifies one of six complaint pathways.
+  - One localized question is rendered at a time.
+  - A response is interpreted and previewed before confirmation.
+  - Confirming atomically updates persisted interview state.
+  - Unknown and conflicts remain explicit.
+  - Required fields and dependency conditions determine completeness.
+  - The patient can revise an answer before completion.
+  - Completion materializes ClinicalHistory; it does not diagnose.
+
+Documents:
+  - Entirely optional.
+  - Patient can skip directly to review.
+  - Uploaded material is not accepted as truth without visible extraction status and fact review.
+
+Review/submission:
+  - Patient can return to edit earlier sections.
+  - Submit changes PatientSession to COMPLETED and Visit to READY_FOR_DOCTOR.
+  - Visit projection is added/updated in the timeline.
+  - Complete screen shows a visit token and next-step explanation.
+
+
+11. ADAPTIVE INTERVIEW ENGINE
+-----------------------------
+
+Implemented complaint pathways:
+  abdominal_pain
+  chest_discomfort
+  headache
+  fever
+  cough_breathing
+  general_pain (fallback)
+
+Common required HPI fields per standard pathway:
+  location
+  duration
+  severity 0-10
+  associatedSymptoms
+
+Abdominal pain adds:
+  vomitingFrequency when vomiting is selected
+  optional pain character
+
+Common conditional AYUSH branch:
+  ayushUse
+  ayushSystem
+  ayushTreatment
+  ayushRecommendedBy
+  ayushStarted
+  ayushUseStatus
+  ayushNewSymptoms
+  ayushReportedEffect when new symptoms are reported
+
+Supported input types:
+  TEXT, LONG_TEXT, VOICE, CHOICE, MULTI_SELECT, YES_NO,
+  NUMBER, DATE, DURATION, SLIDER.
+
+Question selection:
+  - Clarifications have priority 1000.
+  - Otherwise the highest-priority active required uncaptured question wins.
+  - Dependency-controlled questions activate only when their parent value matches.
+  - The browser never decides sequencing.
+
+Knowledge states:
+  YES              Positive/captured information.
+  NO               Explicit negative response.
+  UNKNOWN          Patient does not know or interpretation is unsafe.
+  NOT_ASKED        Not yet captured/reopened for revision.
+  NOT_APPLICABLE   Explicitly not applicable.
+  CONFLICT         Two captured values disagree; clarification required.
+
+NLU behavior:
+  - ClinicalNLUService sees the current question, answer, and at most one relevant existing fact.
+  - Deterministic rules are the default.
+  - Optional OpenAI output must satisfy a strict schema.
+  - One constrained retry is allowed, then deterministic fallback.
+  - Provider metadata may be stored in AIInteraction.
+  - Model output cannot control question order or verify a fact.
+
+
+12. VOICE SYSTEM
+----------------
+
+Browser states:
+  IDLE
+  PERMISSION_REQUEST
+  READY
+  RECORDING
+  STOPPING
+  UPLOADING
+  TRANSCRIBING
+  TRANSCRIBED
+  AWAITING_CONFIRMATION
+  EDITING
+  CONFIRMED
+  ERROR
+  CANCELLED
+
+Browser responsibilities:
+  - Ask for microphone permission.
+  - Choose a supported MediaRecorder MIME type.
+  - Show local Web Audio amplitude; no network is needed for the waveform.
+  - Stop at configured duration or patient action.
+  - Upload Blob with declared language and opaque session proof.
+  - Present text fallback when unavailable/denied/failed.
+
+Server responsibilities:
+  - Limit fields and bytes.
+  - Validate MIME, extension, and signature-level bytes.
+  - Ignore unsafe client filenames and create a provider-safe name.
+  - Resolve session and visit server-side.
+  - Apply provider timeout and normalized errors.
+  - Persist original, optional normalized, patient-edited, and accepted transcript separately.
+  - Mark retained=false and avoid storing raw audio.
+  - Create a new VoiceInteraction for each retry instead of overwriting history.
+
+Providers:
+  mock     Safe deterministic default; no external key.
+  openai   Optional server-side adapter selected by SPEECH_PROVIDER.
+
+Only a patient-confirmed transcript is used downstream.
+
+
+13. DOCUMENT INTELLIGENCE
+-------------------------
+
+Accepted high-level flow:
+  preview -> upload -> validate -> hash -> private store -> process -> OCR pages
+  -> classify -> extract -> normalize -> identity check -> patient review
+  -> optional AYUSH projection -> timeline projection.
+
+Security checks:
+  - Signed session and patient/session ownership.
+  - Bounded upload rate.
+  - DOCUMENT_MAX_FILE_BYTES.
+  - Allowed extension/MIME/magic signature.
+  - Opaque private storage key and path traversal prevention.
+  - Storage directory is never mounted publicly.
+  - Patient-scoped SHA-256 duplicate detection.
+  - Sanitized display filenames.
+  - DOCUMENT_PROCESSING_TIMEOUT_MS.
+
+Document types:
+  PRESCRIPTION
+  LAB_REPORT
+  DISCHARGE_SUMMARY
+  CONSULTATION_NOTE
+  UNKNOWN
+
+Processing statuses:
+  UPLOADED, VALIDATING, PREPROCESSING, OCR_PROCESSING,
+  LAYOUT_PROCESSING, EXTRACTING, NORMALIZING,
+  REVIEW_REQUIRED, VERIFIED, FAILED, CANCELLED.
+
+Evidence model:
+  - DocumentPage stores ordered OCR text/confidence/dimensions.
+  - DocumentFact stores original and normalized values, confidence, status, provenance, and language.
+  - DocumentEvidence points a fact to page, exact source text, and optional bounding box.
+  - Private storage paths are not included in public DTOs.
+
+Patient actions:
+  CONFIRM  Accept the extracted normalized fact for this workflow.
+  EDIT     Change the normalized value while preserving source evidence.
+  REJECT   Mark the extracted fact unusable; do not silently delete provenance.
+
+Identity states:
+  PENDING, MATCHED, IDENTITY_MISMATCH, NOT_PRESENT, MANUAL_OVERRIDE.
+  A mismatch requires an explicit manual path before attaching its details.
+
+Provider behavior:
+  - Mock/text provider supports deterministic tests.
+  - Local provider uses PDF.js, Sharp, and Tesseract.
+  - Hindi medication frequency such as "din mein do baar" in Devanagari is mapped conservatively to twice daily while source text remains intact.
+
+
+14. LONGITUDINAL TIMELINE
+-------------------------
+
+The timeline is a rebuildable index, NOT the source of truth.
+
+Source inputs:
+  visits, symptoms, clinical history, medications, allergies,
+  observations, medical documents/document facts, doctor verifications,
+  AYUSH records, and already-stored risk signals.
+
+Pipeline:
+  TimelineEventBuilder
+    Performs source-specific conservative mapping.
+
+  TimelineNormalizer
+    Creates normalized keys and deterministic SHA-256 fingerprints.
+
+  TimelineRepository
+    Inserts/updates projections, stores versions, filters, pages, and details.
+
+  TimelineConflictService
+    Marks different values under the same semantic key without merging sources.
+
+  TimelineAggregator
+    Groups related visit/report events visually without collapsing facts.
+
+  TimelineRebuildService
+    Rebuilds one requested patient's timeline from source records.
+
+  TimelineAuditService
+    Records metadata-minimized view/rebuild activity.
+
+Temporal rules:
+  - eventDate is distinct from recordedAt and createdAt.
+  - Precision is EXACT_DATE, MONTH_ONLY, YEAR_ONLY, DATE_RANGE, or UNKNOWN.
+  - State is CURRENT, HISTORICAL, UNKNOWN, DISCONTINUED, or NOT_APPLICABLE.
+  - Unknown dates sort after known dates.
+  - Medication action is STARTED, REPORTED, CHANGED, CONFIRMED, or DISCONTINUED.
+  - Historical does not imply discontinued; absence does not imply resolved.
+
+Versioning:
+  - Same fingerprint means no duplicate rewrite.
+  - Changed projection first snapshots prior data into TimelineEventVersion.
+  - Removed/rejected source creates a version and rejects the projection; history is not silently erased.
+
+
+15. WHAT CHANGED COMPARISON
+---------------------------
+
+Purpose:
+  Deterministically report recorded differences between two visit snapshots for a doctor. It does not interpret clinical importance, improvement, deterioration, or risk.
+
+Pipeline:
+  source records -> immutable PatientSnapshot for each visit
+  -> normalization -> conservative entity matching -> field comparison
+  -> classification -> evidence-linked ChangeRecord -> Comparison.
+
+Change types:
+  NEW
+  REMOVED            Means absent from current recording, not clinically resolved.
+  CHANGED
+  UNCHANGED
+  CONFLICTED
+  UNKNOWN
+  NOT_COMPARABLE
+  NEWLY_CAPTURED
+
+Entity types:
+  SYMPTOM, MEDICATION, ALLERGY, OBSERVATION,
+  CLINICAL_HISTORY_FIELD, DOCUMENT, RISK_SIGNAL, AYUSH_RECORD.
+
+Match confidence:
+  HIGH, MEDIUM, LOW, NONE.
+
+Caching/staleness:
+  - Snapshots are immutable and content-hashed.
+  - Engine version and baseline/current hashes identify reusable output.
+  - Source revisions mark an old comparison STALE.
+  - Regeneration creates or reuses the correct current result.
+
+
+16. CLINICAL BRIEF
+------------------
+
+Purpose:
+  A concise doctor-facing view built from existing structured records. It does not run OCR, rebuild timelines, create comparisons, evaluate safety, diagnose, or recommend treatment.
+
+Input bundle:
+  current visit/patient snapshot,
+  symptoms/history,
+  medications/allergies,
+  recent observations,
+  recent documents,
+  latest non-stale comparison,
+  already-stored risk signals,
+  AYUSH records.
+
+Deterministic processing:
+  - Apply BRIEF_RECENT_MONTHS and BRIEF_MAX_* limits.
+  - Deduplicate and rank for compact display.
+  - Create BriefClaim records with source IDs, provenance, confidence, and evidence.
+  - Render template narrative from structured sections.
+
+Sections:
+  PATIENT_SNAPSHOT
+  TODAYS_REASON
+  CURRENT_SYMPTOMS
+  WHAT_CHANGED
+  RELEVANT_HISTORY
+  MEDICATIONS
+  ALLERGIES
+  INVESTIGATIONS
+  SAFETY_ATTENTION
+  NEEDS_VERIFICATION
+  SUPPORTING_DOCUMENTS
+  SOURCE_EVIDENCE
+  AYUSH_USE
+
+Failure semantics:
+  A failed/unavailable dependency is shown as UNAVAILABLE. It is never presented as "nothing found" or a reassuring negative.
+
+Lifecycle:
+  GENERATED -> REVIEWED or ARCHIVED.
+  Source/verification/AYUSH changes may mark it STALE.
+  Refresh builds or reuses a current version.
+
+
+17. DOCTOR VERIFICATION
+-----------------------
+
+Core rule:
+  Source provenance and verification state are independent. A patient-reported fact remains PATIENT_REPORTED after a doctor verifies it; the separate verification state becomes DOCTOR_VERIFIED.
+
+Reviewable fact types:
+  CLINICAL_HISTORY
+  SYMPTOM
+  MEDICATION
+  ALLERGY
+  OBSERVATION
+  DOCUMENT_FACT
+  INTERVIEW_RESPONSE
+  AYUSH_RECORD
+
+Actions:
+  VERIFY
+  CORRECT
+  REJECT
+  MARK_UNCERTAIN
+  CONFIRM_CURRENT
+  KEEP_PREVIOUS
+  SUPERSEDE (internal lifecycle support)
+
+Transaction:
+  1. Verify doctor token and active role.
+  2. Decode/validate opaque review ID.
+  3. Resolve patient ownership, source, evidence, and current source version.
+  4. Validate action-specific body and fact-type correction allowlist.
+  5. Reject stale expected versions to prevent lost updates.
+  6. Reuse a prior result for the same idempotency key.
+  7. Append DoctorVerification with original and verified JSON values.
+  8. Append metadata-minimized AuditLog.
+  9. Update permitted source status/value/version.
+ 10. Commit atomically.
+ 11. Mark comparisons and briefs stale.
+ 12. Request timeline rebuild.
+
+If step 12 fails after commit, the doctor decision remains saved and downstream views report that refresh is needed. An LLM has no route to perform a verification action.
+
+
+18. AYUSH SUPPORT
+-----------------
+
+Purpose:
+  Record AYUSH or other traditional-healthcare use as ordinary longitudinal information with the same provenance/evidence/verification discipline as other facts.
+
+Systems:
+  AYURVEDA
+  YOGA_NATUROPATHY
+  UNANI
+  SIDDHA
+  HOMOEOPATHY
+  OTHER_TRADITIONAL_SYSTEM
+  UNKNOWN
+
+Use statuses:
+  CURRENT, HISTORICAL, STOPPED, UNKNOWN, NOT_DOCUMENTED.
+
+Temporal relationships:
+  REPORTED_AFTER, DOCUMENTED_ALONGSIDE, UNKNOWN.
+
+Capture fields include:
+  original/normalized name, ingredients, dose, frequency, route,
+  practitioner details, reported reason, start/end dates, current/history status,
+  reported effect/new symptom, source, evidence, verification, language.
+
+Integrations:
+  - Adaptive interview conditional branch.
+  - Confirmed voice input.
+  - Conservative document extraction.
+  - Existing doctor verification ledger.
+  - AYUSH_TREATMENT timeline events.
+  - AYUSH_RECORD comparison entities.
+  - AYUSH_USE Clinical Brief section.
+  - English/Hindi enum labels.
+
+Hard boundaries:
+  - No AYUSH prescribing.
+  - No efficacy judgment.
+  - No claim that a reported effect was caused by a treatment.
+  - No drug/AYUSH interaction inference.
+  - No practitioner-registry validation.
+  - Generic "I take Ayurvedic medicine" keeps medicine unknown unless named.
+
+
+19. MULTILINGUAL LAYER
+----------------------
+
+Three separate representations:
+  A. Original patient/source content.
+  B. Language-neutral structured fact/concept.
+  C. Replaceable display translation.
+
+The display translation never overwrites A or changes B.
+
+Supported active languages:
+  en  English  LTR
+  hi  Hindi    LTR
+
+Registered coming-soon languages:
+  ta Tamil, te Telugu, mr Marathi, bn Bengali, gu Gujarati,
+  kn Kannada, ml Malayalam, pa Punjabi, or Odia, ur Urdu.
+  Urdu is marked RTL for future work; no complete RTL workflow is claimed.
+
+Central pieces:
+  packages/shared/src/language.ts
+    Registry, support states, direction, capability flags, and matched en/hi locale keys.
+
+  apps/api/src/language/language-detection.ts
+    Bounded English/Hindi/Devanagari/Romanized-code-mix detection with confidence/uncertainty.
+
+  apps/api/src/language/glossary.ts
+    Versioned concept IDs, English/Hindi terms, synonyms, transliterations.
+
+  apps/api/src/language/clinical-normalizer.ts
+    Maps approved phrases to language-neutral concepts, duration, severity, negation, and clarification.
+
+  apps/api/src/language/translation.ts
+    Provider and batch interface backed by approved resources. Unknown clinical prose falls back to the original.
+
+  apps/api/src/interview/question-localization.ts
+    Localized question text/options while preserving language-neutral optionValues.
+
+Examples:
+  "abdominal pain" and the Hindi equivalent map to SYMPTOM_ABDOMINAL_PAIN.
+  "Pet mein three days se pain hai" maps to abdominal pain + 3 days.
+  Hindi "I do not have fever" preserves fever=NO.
+  "Pet kharab hai" is deliberately ambiguous and requests clarification.
+
+Stored language metadata:
+  - Patient/doctor preferred language.
+  - Interview original/detected/display language and display text.
+  - Voice detected languages.
+  - Document and document-fact original/detected language.
+  - Optional fact displayTranslation.
+
+Limitations:
+  - English/Hindi support is bounded to implemented resources/workflows.
+  - No measured clinical-translation accuracy is claimed.
+  - Transliteration/code-switching is phrase based, not universal.
+  - TTS has an abstraction but is not advertised as available.
+
+
+20. DATABASE MODEL CATALOG
+--------------------------
+
+SystemConfig
+  Persistent system key/value configuration metadata.
+
+User
+  Future authenticated identity with PATIENT/DOCTOR/ADMIN role, status, identifiers, and preferred language. Production identity is not complete.
+
+PatientProfile
+  Minimum demographic profile, patient code, name, age, sex, phone, preferred language, and clinical relations.
+
+PatientSession
+  Resumable pre-consultation state: step, status, language, drafts, timestamps, optional patient and visit.
+
+Visit
+  PRE_CONSULTATION or FOLLOW_UP encounter context, token, chief complaint, state, patient, and clinical relations.
+
+Interview
+  One versioned deterministic question-graph state machine per session/visit.
+
+InterviewResponse
+  Raw answer, normalized JSON, source, confidence, status, confirmation, and multilingual metadata per question.
+
+AIInteraction
+  Operational provider/model/validation/token/latency metadata for an interview call; not a verified fact.
+
+VoiceInteraction
+  Original provider transcript, optional normalization, patient edit, accepted transcript, audio metadata, language metadata, status, and retained=false.
+
+Observation
+  Typed concept/value/unit/reference-range/knowledge-state/effective-time record for vitals, labs, or future structured measurements.
+
+ClinicalHistory
+  Visit-level structured history materialized from confirmed interview state.
+
+Symptom
+  Queryable symptom record with status, dates, source, and verification fields.
+
+Medication
+  Patient medication record with source, status, temporal details, and verification fields.
+
+Allergy
+  Patient allergy record with reaction/severity/source/verification details.
+
+MedicalDocument
+  Private file metadata, content hash, type, processing/identity status, language, summary, date, and relations.
+
+DocumentExtraction
+  One structured processing result with provider/model/version/confidence/errors.
+
+DocumentPage
+  Ordered OCR page text, confidence, dimensions, and optional processed private image key.
+
+DocumentFact
+  Typed original/normalized values, confidence, review status, provenance, patient/visit links, language, and optional display translation.
+
+AyushRecord
+  Structured AYUSH/traditional-healthcare record with source, evidence, temporal status, reported effects, and verification.
+
+DocumentEvidence
+  Fact-to-page link with source text and optional bounding box.
+
+DocumentProcessingJob
+  Attempt count, state, timing, failure code/message, and processing observability.
+
+TimelineEvent
+  Current rebuildable chronological projection with source/origin/evidence/temporal/conflict/fingerprint metadata.
+
+TimelineEventVersion
+  Immutable prior projection snapshots when a timeline event changes or is rejected.
+
+RiskSignal
+  Storage for risk signals supplied elsewhere. No evaluator creates them in the current checkout.
+
+DoctorVerification
+  Immutable doctor decision ledger preserving original and verified JSON, action, actor, version, and time.
+
+ConsentRecord
+  Versioned explicit consent tied to session and optionally patient.
+
+AuditLog
+  Metadata-minimized actor/action/entity/request record. Must not carry unnecessary patient text.
+
+PatientSnapshot
+  Immutable content-hashed visit snapshot used by comparisons.
+
+Comparison
+  Baseline/current snapshot comparison, engine version, hashes, status, lifecycle, and changes.
+
+ChangeRecord
+  Per-entity/per-field before/after/delta/classification/match/evidence result.
+
+ClinicalBrief
+  Versioned generated/reviewed/stale/archived doctor brief for patient/visit.
+
+BriefClaim
+  Structured claim within a brief section with source, provenance, confidence, evidence, and display order.
+
+
+21. IMPORTANT ENUMS
+-------------------
+
+UserRole: PATIENT, DOCTOR, ADMIN.
+UserStatus: ACTIVE, INACTIVE, SUSPENDED.
+PatientSex: MALE, FEMALE, OTHER, PREFER_NOT_TO_SAY.
+PatientSessionStatus: STARTED, IN_PROGRESS, READY_FOR_REVIEW, COMPLETED, ABANDONED.
+VisitStatus: WAITING, IN_PROGRESS, READY_FOR_DOCTOR, UNDER_REVIEW, VERIFIED, COMPLETED, CANCELLED.
+VisitType: PRE_CONSULTATION, FOLLOW_UP.
+
+ClinicalSource:
+  PATIENT_REPORTED, AI_STRUCTURED, DOCUMENT_EXTRACTED, DOCTOR_ENTERED,
+  AYUSH_PRACTITIONER_DOCUMENTED, DOCTOR_VERIFIED, SYSTEM_GENERATED.
+
+DocumentFactStatus: EXTRACTED, NEEDS_REVIEW, CONFIRMED, REJECTED, VERIFIED.
+ExtractionStatus: PENDING, PROCESSING, COMPLETED, REVIEW_REQUIRED, FAILED.
+TimelineSource: PATIENT_REPORTED, VOICE_INTERVIEW, DOCUMENT_EXTRACTED,
+  CLINICAL_RECORD, DOCTOR_VERIFIED, SYSTEM_GENERATED, SAFETY_ENGINE.
+TimelineEventStatus: DRAFT, CAPTURED, AI_STRUCTURED, DOCUMENT_EXTRACTED,
+  PATIENT_CONFIRMED, DOCTOR_VERIFIED, REJECTED.
+ComparisonStatus: GENERATED, REVIEWED, ARCHIVED, STALE.
+ClinicalBriefStatus: GENERATED, REVIEWED, STALE, ARCHIVED.
+RiskSeverity: INFO, LOW, MEDIUM, HIGH.
+RiskStatus: OPEN, ACKNOWLEDGED, DISMISSED, RESOLVED.
+VoiceInteractionStatus: RECORDING, PROCESSING, TRANSCRIBED, CONFIRMED, EDITED, FAILED, CANCELLED.
+InterviewStatus: ACTIVE, REVIEW, COMPLETED, ABANDONED.
+InterviewResponseStatus: CAPTURED, STRUCTURED, CONFIRMED, NEEDS_CLARIFICATION.
+
+VerificationStatus includes:
+  PENDING, VERIFIED, PARTIALLY_CORRECT, EDITED, REJECTED, MISSED,
+  UNREVIEWED, PATIENT_REPORTED, AI_STRUCTURED, DOCUMENT_EXTRACTED,
+  NEEDS_REVIEW, DOCTOR_VERIFIED, DOCTOR_CORRECTED,
+  DOCTOR_REJECTED, SUPERSEDED.
+
+
+22. PROVENANCE RULES
+--------------------
+
+1. Never replace original patient wording with normalized text.
+2. Never replace original OCR/source evidence with display translation.
+3. Source describes origin; verification describes later human review.
+4. AI_STRUCTURED and DOCUMENT_EXTRACTED are not doctor verified.
+5. A corrected normalized value retains the original value in evidence/history.
+6. Unknown is not negative.
+7. Missing is not resolved.
+8. Historical is not automatically discontinued.
+9. Temporal association is not causation.
+10. Confidence describes extraction/interpretation quality, not medical certainty.
+11. Timeline, comparison, brief, and queue records are derived views, not replacement source records.
+12. Downstream derived views are marked stale or rebuilt after source changes.
+
+
+23. SECURITY AND PRIVACY MODEL
+------------------------------
+
+Implemented safeguards:
+  - HMAC-based opaque patient session proofs.
+  - Signed doctor proof plus active role lookup.
+  - Server-side patient/session/visit ownership resolution.
+  - Zod validation of bodies, parameters, queries, and controlled enums.
+  - Helmet headers and configured CORS origin.
+  - 1 MB JSON/form body limits.
+  - Audio/document byte, MIME, extension, signature, timeout, and path controls.
+  - Private document storage; storage keys omitted from DTOs.
+  - Raw voice audio is not retained by HELIOS.
+  - Request IDs on logs and errors.
+  - Authorization/cookies/bodies/patient-shaped fields redacted from logs.
+  - Operational language/provider logs exclude patient text.
+  - Append/immutable verification and audit records.
+  - Optimistic concurrency and idempotency for doctor actions.
+
+Not production-complete:
+  - Production clinician login/identity federation.
+  - Care-team/purpose-of-use authorization.
+  - Formal threat model and penetration test.
+  - Encryption/key-management deployment proof.
+  - Retention, deletion, backup, incident response, vendor, and legal policy implementation.
+  - Regulatory or medical-device validation.
+
+
+24. ENVIRONMENT VARIABLES
+-------------------------
+
+NODE_ENV
+  development/test/production behavior.
+
+PORT
+  API port, default example 5000.
+
+DATABASE_URL
+  PostgreSQL connection string. Required for patient/domain APIs.
+
+NEXT_PUBLIC_API_URL
+  Browser-visible API base URL, example http://localhost:5000.
+
+WEB_ORIGIN
+  Allowed CORS web origin, example http://localhost:3000.
+
+LOG_LEVEL
+  Pino logging threshold.
+
+SESSION_TOKEN_SECRET
+  Secret for patient session proofs. Replace example value.
+
+DOCTOR_DEMO_ACCESS_CODE
+  Demo-only doctor entry code. Not production authentication.
+
+AI_PROVIDER / AI_API_KEY / AI_MODEL / AI_TIMEOUT_MS
+  Optional generic/clinical structured provider configuration.
+
+CLINICAL_NLU_PROVIDER
+  rules by default; optional configured provider.
+
+SPEECH_PROVIDER / SPEECH_API_KEY / SPEECH_MODEL / SPEECH_TIMEOUT_MS
+  Speech adapter configuration. mock is safe default.
+
+VOICE_MAX_DURATION_SECONDS / VOICE_MAX_FILE_BYTES
+  Server-enforced recording ceilings.
+
+NEXT_PUBLIC_VOICE_MAX_DURATION_SECONDS / NEXT_PUBLIC_VOICE_MAX_FILE_BYTES
+  Browser UX ceilings only; server settings remain authoritative.
+
+STORAGE_PROVIDER / STORAGE_PATH
+  Private document storage selection/path.
+
+DOCUMENT_MAX_FILE_BYTES
+  Server document upload ceiling.
+
+DOCUMENT_PROCESSING_TIMEOUT_MS
+  Processing timeout.
+
+DOCUMENT_OCR_PROVIDER
+  mock or configured local provider.
+
+DOCUMENT_PROCESSING_VERSION
+  Version string recorded with extraction.
+
+BRIEF_RECENT_MONTHS
+  Recent-history window for Clinical Brief selection.
+
+BRIEF_MAX_SYMPTOMS / BRIEF_MAX_CHANGES / BRIEF_MAX_DOCUMENTS
+  Hard output-selection bounds.
+
+ENABLE_VOICE / ENABLE_OCR / ENABLE_AI_INTERVIEW / ENABLE_RISK_ENGINE /
+ENABLE_AYUSH / ENABLE_DEMO_MODE / DEMO_MODE
+  Feature/config flags. A flag does not mean the postponed production system around it exists.
+
+Never place database URLs, API keys, session secrets, or doctor credentials in NEXT_PUBLIC_* variables.
+
+
+25. LOCAL SETUP FROM AN EMPTY MACHINE
+-------------------------------------
+
+Prerequisites:
+  - Node.js 20 or newer.
+  - pnpm compatible with packageManager pnpm@11.19.0.
+  - PostgreSQL 15 or newer.
+
+Commands from repository root:
+
+  pnpm install
+
+Copy .env.example to .env using your normal file manager/shell, then replace secrets and point DATABASE_URL at PostgreSQL.
+
+  pnpm db:generate
+  pnpm db:migrate
+  pnpm db:seed
+  pnpm dev
+
+Open:
+  Web  http://localhost:3000
+  API  http://localhost:5000
+
+Health:
+  http://localhost:5000/health
+
+The health endpoint can report not_configured without a database. Patient/domain calls require a real configured PostgreSQL connection.
+
+Safe local provider defaults:
+  SPEECH_PROVIDER=mock
+  CLINICAL_NLU_PROVIDER=rules
+  DOCUMENT_OCR_PROVIDER=mock
+
+
+26. ROOT COMMAND REFERENCE
+--------------------------
+
+pnpm dev
+  Run web and API development servers together.
+
+pnpm build
+  Compile shared and API TypeScript, then build optimized Next.js output.
+
+pnpm start
+  Start production builds of web and API.
+
+pnpm lint
+  Run all workspace lint tasks with zero warnings allowed.
+
+pnpm typecheck
+  Run strict TypeScript checks in shared, API, API tools, and web.
+
+pnpm test
+  Regenerate binary document fixtures, then run all package test suites.
+
+pnpm format / pnpm format:check
+  Write or verify Prettier formatting.
+
+pnpm db:generate
+  Generate Prisma Client.
+
+pnpm db:validate
+  Validate Prisma schema using a schema-only placeholder URL.
+
+pnpm db:migrate
+  Apply development migrations to configured PostgreSQL.
+
+pnpm db:seed
+  Insert clearly marked synthetic demo records.
+
+pnpm db:check
+  Test configured database connectivity.
+
+pnpm dataset:generate
+  Rebuild deterministic synthetic dataset.
+
+pnpm dataset:validate
+  Validate counts, schema, references, dates, order, and split isolation.
+
+pnpm document-fixtures:generate
+  Rebuild 11 binary synthetic Document AI fixtures.
+
+pnpm document-ocr:smoke
+  Exercise local image OCR against a synthetic lab image.
+
+pnpm locales:validate
+  Check English/Hindi missing/extra/duplicate keys, placeholders, and language codes.
+
+
+27. DATABASE MIGRATION HISTORY
+------------------------------
+
+20260908000000_phase_zero_foundation
+  Initial system foundation.
+
+20260908010000_domain_foundation
+  Patient/session/visit/clinical/consent/audit foundations.
+
+20260908020000_voice_interactions
+  Voice interaction persistence.
+
+20260909000000_adaptive_interviews
+  Interview, response, and AI interaction persistence.
+
+20260909120000_reference_data_architecture
+  Observation, knowledge/provenance vocabulary, graph versioning.
+
+20260909150000_document_ai
+  Documents, pages, facts, evidence, jobs, extraction.
+
+20260909170000_timeline_engine
+  Timeline events and versions.
+
+20260909190000_comparison_engine
+  Snapshots, comparisons, change records.
+
+20260910100000_clinical_brief
+  Clinical briefs and claims.
+
+20260910140000_doctor_verification
+  Verification state/action/data model.
+
+20260910180000_ayush_integration
+  AYUSH records and integrations.
+
+20260910210000_multilingual_language_layer
+  Preferred language and source/display/detected-language metadata.
+
+Migrations are additive. Do not edit old applied migrations to introduce a new change; create a new migration.
+
+
+28. SYNTHETIC SEED AND DEMO DATA
+--------------------------------
+
+The Prisma seed creates clearly synthetic demo records, including named demo personas such as Aarav Sharma, Priya Patel, and Rohan Verma. These are not real patients.
+
+The larger deterministic data generator uses:
+  seed: 26047
+  fixed reference time: 2026-01-15T09:00:00.000Z
+
+Generated counts:
+  1,000 patients
+  3,000 visits
+  15,000 clinical facts
+  3,000 clinical summaries
+  3,000 conversations
+  18,000 utterances
+  1,000 document records
+  7,000 timeline events
+  3,000 evaluation cases
+  1,000 doctor verifications
+  9,000 speech-evaluation rows
+  1,000 timeline comparisons
+
+Patient-isolated split:
+  Train       790 patients
+  Validation  119 patients
+  Test         91 patients
+  Observed cross-split patient leakage: 0.
+
+Language modes in synthetic utterances:
+  English en
+  Hindi hi
+  Hinglish hi-Latn
+
+The speech evaluation has text/metadata only and explicitly says audioAvailable=false. The synthetic corpus produces no model weights and is not clinical evidence.
+
+
+29. REFERENCE PROJECTS AND WHAT WAS LEARNED
+-------------------------------------------
+
+OpenEMR:
+  Useful: stable patient/encounter records, documents, observations, statuses, scoped APIs, FHIR as exchange surface.
+  Not copied: PHP application, billing structures, US-specific assumptions, large legacy schema.
+
+OpenMRS:
+  Useful: visit/encounter separation, concept + typed observation + unit + clinical time, locale-aware names, revision history.
+  Not copied: Java/Hibernate platform, module framework, order engine, metadata platform.
+
+Synthea:
+  Useful: deterministic seed/time, canonical patient record, multiple projections, stable IDs, patient-first data splitting.
+  Not copied: disease modules, probabilities, US demographics/costs, generated source records.
+
+MTS-Dialog:
+  Useful: speaker turns, section targets, fact/omission/hallucination evaluation.
+  Not copied: source conversations or summaries.
+
+Indic speech reference:
+  Useful: selected vs detected language, native script, transliteration, code-mix metadata, ASR and semantic evaluation separation.
+  Not copied: reference audio or transcripts into generated HELIOS training data.
+
+FHIR files in dataset are lightweight mapping fixtures, not certified FHIR profiles, production bundles, or ABDM integration.
+
+
+30. TESTING AND CURRENT VERIFIED RESULTS
+----------------------------------------
+
+Phase 12 final verification recorded:
+  - 208 API tests passed.
+  - 26 web tests passed.
+  - 234 executed tests passed in total.
+  - 5 PostgreSQL integration tests were skipped because they are environment-gated.
+  - Prisma schema validation passed.
+  - Prisma Client generation passed.
+  - Locale validation passed with 43 English and 43 Hindi keys and no parity errors.
+  - Prettier check passed.
+  - ESLint passed with zero warnings.
+  - Strict typecheck passed.
+  - Production build passed and generated 18 Next.js routes.
+
+Major test areas:
+  patient flow and errors
+  voice reducer/hook/service/API/provider security
+  adaptive interview engine/NLU/API
+  dataset invariants
+  document providers/local OCR/security/service/API/evaluation
+  timeline engine/rebuild/API
+  comparison engine/evaluation/security/API/UI
+  Clinical Brief builder/service/API/UI
+  doctor verification repository/service/integration/security/API/UI
+  AYUSH normalizer/interview/document/service/verification/API/UI
+  multilingual registry/parity/detection/normalization/code switching/
+    negation/ambiguity/document frequency/routes/auth/log privacy/UI
+
+The skipped database integration tests should be run with the expected integration database environment before a deployment decision.
+
+
+31. LOGGING, ERRORS, AND AUDIT
+------------------------------
+
+Request logging keeps:
+  request ID, method, path, status, duration, timestamp, level.
+
+Provider operation logs may keep:
+  operation, provider/model identifiers where allowed, status, latency, normalized error code.
+
+Do not log:
+  authorization, cookies, request bodies, audio bytes, document bytes,
+  transcript text, OCR text, extracted patient entities, source evidence,
+  unsafe client filenames, secrets, or unnecessary patient identifiers.
+
+Error policy:
+  - AppError carries status and stable code.
+  - Zod errors become structured validation failures.
+  - Production responses omit stacks.
+  - Every error response includes requestId for correlation.
+
+Audit policy:
+  - Clinical mutations and important views/rebuilds create purpose-built metadata records.
+  - DoctorVerification holds immutable clinical decision evidence.
+  - AuditLog should stay metadata-minimized and must not become a duplicate clinical record.
+
+
+32. HOW TO ADD A FEATURE WITHOUT BREAKING THE ARCHITECTURE
+----------------------------------------------------------
+
+Adding an API operation:
+  1. Define/update a shared DTO only if both API and web need it.
+  2. Add a Zod schema in apps/api/src/validation.
+  3. Add repository methods for database work.
+  4. Add service behavior for authorization/workflow/transactions.
+  5. Add controller translation and standard envelope.
+  6. Add route with validation/auth/upload middleware in correct order.
+  7. Add API/service/repository/security tests.
+  8. Update endpoint docs and ground-zero guide if public architecture changes.
+
+Adding a clinical source field:
+  1. Decide authoritative source model and provenance.
+  2. Preserve original and normalized values separately.
+  3. Use an additive Prisma migration.
+  4. Update serializers; do not return raw Prisma objects.
+  5. Update TimelineEventBuilder.
+  6. Decide whether comparisons snapshot/match/compare it.
+  7. Decide whether Clinical Brief selects it.
+  8. Add it to verification only with an explicit correction allowlist.
+  9. Add unknown/conflict/evidence/security tests.
+
+Adding a language:
+  1. Keep it COMING_SOON until completed.
+  2. Add registry profile and correct text direction.
+  3. Add every locale key with matching placeholders.
+  4. Add every relevant interview question/option translation.
+  5. Add governed glossary/transliteration fixtures.
+  6. Add detection and mixed-language tests.
+  7. Validate speech provider support and error behavior.
+  8. Add document examples.
+  9. Run accessibility/responsive checks, including RTL when relevant.
+ 10. Run locales:validate and all tests before changing status to SUPPORTED.
+
+Adding an AI/provider adapter:
+  1. Implement the narrow provider interface behind a service.
+  2. Keep keys server-only.
+  3. Enforce timeouts and bounded inputs.
+  4. Require strict structured output when returning facts.
+  5. Validate output, retry at most within documented bounds, then fall back.
+  6. Store provider metadata/provenance without logging patient content.
+  7. Ensure model output cannot verify, diagnose, recommend, or control workflow.
+  8. Evaluate independently before making quality claims.
+
+
+33. TROUBLESHOOTING MAP
+-----------------------
+
+Health says not_configured:
+  DATABASE_URL is absent/unusable. Health can still run, but domain APIs cannot.
+
+Prisma client/type mismatch:
+  Run pnpm db:generate, then pnpm typecheck.
+
+Migration failure:
+  Confirm PostgreSQL is running, DATABASE_URL database/schema exists, and earlier migrations are applied in order.
+
+Browser cannot call API:
+  Check NEXT_PUBLIC_API_URL, API PORT, WEB_ORIGIN, and CORS origin match.
+
+Patient gets forbidden on voice/document/timeline:
+  Check x-session-token, session ID ownership, patient binding, and whether localStorage belongs to another/reset session.
+
+Doctor gets unauthorized/inactive:
+  Check demo sign-in token, DOCTOR_DEMO_ACCESS_CODE, User role/status, and x-doctor-token.
+
+Voice unavailable:
+  Check browser MediaRecorder support/permission, secure context, supported MIME, size/duration settings, SPEECH_PROVIDER, key, and timeout. Text fallback should remain usable.
+
+Document rejected:
+  Check max size, extension, MIME, file signature, rate limit, ownership, duplicate hash, storage path permissions, and OCR timeout/provider.
+
+Document processing failed:
+  Original remains stored. Retry processing without re-upload or upload a clearer copy.
+
+Interview repeats/clarifies:
+  Inspect persisted facts for NOT_ASKED, UNKNOWN, or CONFLICT and question dependency conditions. This may be intended conservative behavior.
+
+Comparison/brief says stale:
+  A source or verification revision occurred. Regenerate comparison/refresh brief after timeline/source dependencies update.
+
+Locale validator fails:
+  Match English/Hindi keys exactly, remove duplicates/extras, preserve placeholders, and keep codes in the registry.
+
+Tests skip database integration:
+  Configure the integration URL expected by tests and provide a disposable PostgreSQL database.
+
+
+34. KNOWN LIMITATIONS AND NON-GOALS
+-----------------------------------
+
+Clinical/product:
+  - No Phase 5 SafetyEngine.
+  - No diagnosis, medical recommendation, autonomous triage, emergency declaration, or treatment planning.
+  - No drug/AYUSH interaction engine, causality inference, or efficacy scoring.
+  - No production clinician identity/care-team authorization.
+  - No practitioner registry validation.
+  - No certified FHIR/ABDM integration.
+
+AI/language:
+  - No trained HELIOS model or model weights.
+  - No claim of clinical translation accuracy.
+  - English/Hindi resources and transliteration are bounded.
+  - Future languages are coming soon only.
+  - Speech accuracy depends on provider and environment.
+  - TTS and complete RTL workflow are not implemented.
+
+Infrastructure:
+  - Local storage/provider paths are MVP choices, not production object storage/queue architecture.
+  - Demo doctor access is not production authentication.
+  - Formal compliance, retention, deletion, backups, incident response, key management, and security certification remain external work.
+
+Testing:
+  - Five DB integration tests were environment-gated in the last recorded run.
+  - No claim of comprehensive manual screen-reader/WCAG validation.
+  - No load/performance percentile benchmark.
+  - Synthetic data is not clinical validation evidence.
+
+
+35. BEST SOURCE FILES TO READ NEXT
+----------------------------------
+
+Start here:
+  README.md
+  outputs/HELIOS-DETAILED-FLOWCHART.md
+  docs/architecture.md
+  docs/domain-model.md
+  docs/security.md
+
+API composition and runtime:
+  apps/api/src/app.ts
+  apps/api/src/server.ts
+  apps/api/src/config/env.ts
+
+Patient workflow:
+  apps/web/src/providers/patient-flow-provider.tsx
+  apps/api/src/services/patient-flow-service.ts
+  apps/api/src/routes/patient-flow.ts
+
+Interview:
+  apps/api/src/interview/question-graph.ts
+  apps/api/src/interview/interview-engine.ts
+  apps/api/src/interview/clinical-nlu.ts
+  apps/api/src/services/interview-service.ts
+
+Voice:
+  apps/web/src/lib/voice-machine.ts
+  apps/web/src/hooks/use-voice-recorder.ts
+  apps/api/src/services/voice-service.ts
+  apps/api/src/providers/speech-provider.ts
+
+Documents:
+  apps/api/src/services/document-service.ts
+  apps/api/src/document-ai/providers.ts
+  apps/api/src/repositories/document-repository.ts
+  docs/document-ai/
+
+Timeline:
+  apps/api/src/timeline/
+  apps/api/src/repositories/timeline-repository.ts
+  docs/timeline/
+
+Comparison:
+  apps/api/src/comparison/
+  docs/comparison/
+
+Clinical Brief:
+  apps/api/src/clinical-brief/
+  docs/clinical-brief/
+
+Verification:
+  apps/api/src/verification/verification-service.ts
+  apps/api/src/repositories/verification-repository.ts
+  docs/verification/
+
+AYUSH:
+  apps/api/src/ayush/
+  docs/ayush/
+
+Language:
+  packages/shared/src/language.ts
+  apps/api/src/language/
+  apps/api/src/interview/question-localization.ts
+  docs/multilingual/
+
+Database:
+  apps/api/prisma/schema.prisma
+  apps/api/prisma/migrations/
+  apps/api/prisma/seed.ts
+
+Tests:
+  apps/api/tests/
+  apps/web/src/**/*.test.tsx
+
+Phase-by-phase evidence:
+  outputs/phase-0-completion-report.md
+  outputs/phase-1-2-completion-report.md
+  outputs/phase-3-completion-report.md
+  outputs/phase-4-completion-report.md
+  outputs/reference-intelligence-data-engineering-report.md
+  outputs/phase-6-document-ai-completion-report.md
+  outputs/phase-7-longitudinal-timeline-completion-report.md
+  outputs/phase-8-what-changed-completion-report.md
+  outputs/phase-9-clinical-brief-completion-report.md
+  outputs/phase-10-doctor-verification-completion-report.md
+  outputs/phase-11-ayush-integration-completion-report.md
+  outputs/phase-12-multilingual-language-layer-completion-report.md
+
+
+36. FINAL ORIENTATION
+---------------------
+
+If you remember only five things:
+
+  1. HELIOS captures and organizes; it does not diagnose or recommend.
+  2. Original source, normalized fact, display translation, and verification are separate.
+  3. PostgreSQL source records are authoritative; timeline/comparison/brief/queue are derived.
+  4. Patient confirmation and doctor verification are explicit human decisions.
+  5. Phase 5 SafetyEngine and production authentication/compliance remain unresolved boundaries.
+
+End of ground-zero guide.

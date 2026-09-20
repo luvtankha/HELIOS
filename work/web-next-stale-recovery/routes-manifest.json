@@ -1,0 +1,235 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/:path*",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; frame-src 'self' blob:; connect-src 'self' http://localhost:5000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), geolocation=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        }
+      ],
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?(?:/)?$"
+    }
+  ],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/doctor/patients/[patientId]",
+      "regex": "^/doctor/patients/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPpatientId": "nxtPpatientId"
+      },
+      "namedRegex": "^/doctor/patients/(?<nxtPpatientId>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/doctor/patients/[patientId]/ayush",
+      "regex": "^/doctor/patients/([^/]+?)/ayush(?:/)?$",
+      "routeKeys": {
+        "nxtPpatientId": "nxtPpatientId"
+      },
+      "namedRegex": "^/doctor/patients/(?<nxtPpatientId>[^/]+?)/ayush(?:/)?$"
+    },
+    {
+      "page": "/doctor/patients/[patientId]/brief",
+      "regex": "^/doctor/patients/([^/]+?)/brief(?:/)?$",
+      "routeKeys": {
+        "nxtPpatientId": "nxtPpatientId"
+      },
+      "namedRegex": "^/doctor/patients/(?<nxtPpatientId>[^/]+?)/brief(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/doctor",
+      "regex": "^/doctor(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/doctor(?:/)?$"
+    },
+    {
+      "page": "/doctor/login",
+      "regex": "^/doctor/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/doctor/login(?:/)?$"
+    },
+    {
+      "page": "/doctor/queue",
+      "regex": "^/doctor/queue(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/doctor/queue(?:/)?$"
+    },
+    {
+      "page": "/doctor/sih-demo",
+      "regex": "^/doctor/sih\\-demo(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/doctor/sih\\-demo(?:/)?$"
+    },
+    {
+      "page": "/doctor/verification",
+      "regex": "^/doctor/verification(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/doctor/verification(?:/)?$"
+    },
+    {
+      "page": "/doctor/what-changed",
+      "regex": "^/doctor/what\\-changed(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/doctor/what\\-changed(?:/)?$"
+    },
+    {
+      "page": "/doctor-coming-soon",
+      "regex": "^/doctor\\-coming\\-soon(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/doctor\\-coming\\-soon(?:/)?$"
+    },
+    {
+      "page": "/icon.svg",
+      "regex": "^/icon\\.svg(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/icon\\.svg(?:/)?$"
+    },
+    {
+      "page": "/patient",
+      "regex": "^/patient(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/patient(?:/)?$"
+    },
+    {
+      "page": "/patient/complaint",
+      "regex": "^/patient/complaint(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/patient/complaint(?:/)?$"
+    },
+    {
+      "page": "/patient/complete",
+      "regex": "^/patient/complete(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/patient/complete(?:/)?$"
+    },
+    {
+      "page": "/patient/consent",
+      "regex": "^/patient/consent(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/patient/consent(?:/)?$"
+    },
+    {
+      "page": "/patient/details",
+      "regex": "^/patient/details(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/patient/details(?:/)?$"
+    },
+    {
+      "page": "/patient/documents",
+      "regex": "^/patient/documents(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/patient/documents(?:/)?$"
+    },
+    {
+      "page": "/patient/interview",
+      "regex": "^/patient/interview(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/patient/interview(?:/)?$"
+    },
+    {
+      "page": "/patient/language",
+      "regex": "^/patient/language(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/patient/language(?:/)?$"
+    },
+    {
+      "page": "/patient/listening",
+      "regex": "^/patient/listening(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/patient/listening(?:/)?$"
+    },
+    {
+      "page": "/patient/review",
+      "regex": "^/patient/review(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/patient/review(?:/)?$"
+    },
+    {
+      "page": "/patient/timeline",
+      "regex": "^/patient/timeline(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/patient/timeline(?:/)?$"
+    },
+    {
+      "page": "/patient/waiting",
+      "regex": "^/patient/waiting(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/patient/waiting(?:/)?$"
+    },
+    {
+      "page": "/sih-demo",
+      "regex": "^/sih\\-demo(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/sih\\-demo(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

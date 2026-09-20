@@ -1,0 +1,240 @@
+HELIOS PHASE 14 — WAITING / TOKEN MANAGEMENT SYSTEM
+Healthcare Enabled Language & Intelligent Observation System
+Implementation reference — 13 September 2026
+
+PURPOSE
+=======
+
+Phase 14 connects the patient intake and the separate doctor workspace through one backend-controlled operational queue:
+
+PATIENT APP -> HELIOS API -> QUEUE ENGINE -> POSTGRESQL
+                                         <- DOCTOR DASHBOARD
+
+The queue coordinates waiting. It does not diagnose, prescribe, recommend treatment, classify medical stability, or dispatch emergencies. The doctor remains the clinical authority.
+
+WHAT HAPPENS END TO END
+=======================
+
+1. The patient completes the required HELIOS intake and review.
+2. Submit sends the signed patient session credential to the API.
+3. The backend verifies that credential and derives the session identity from it. It does not accept a patient identity from the browser.
+4. Inside a serializable database transaction, the backend verifies that the session has a patient, visit, and chief complaint.
+5. If that visit already has a QueueEntry, the existing entry is returned. A refresh or repeated Submit cannot create a second token.
+6. Otherwise, QueueCounter is atomically upserted/incremented for queue key plus clinic date.
+7. The resulting sequence is formatted as A-001, A-002, and so on. Database uniqueness protects both the visit link and daily queue sequence.
+8. A QueueEntry is created, the Visit is marked READY_FOR_DOCTOR, the session is completed, and TOKEN_CREATED plus PATIENT_CHECKED_IN events and audit records are written in the same transaction.
+9. The patient enters /patient/waiting. The page asks only for that signed session's status.
+10. The backend calculates the current position, people ahead, and deterministic estimated wait from persisted queue state.
+11. The patient page and doctor queue poll every eight seconds while the tab is visible. Polling is the Phase 14 in-app update provider and PostgreSQL remains authoritative.
+12. The doctor signs in separately. The backend verifies the doctor token, reloads the active User/role, and limits non-admin results to active doctor-patient assignments.
+13. The dashboard shows the operational queue and Call Next without requiring navigation to another page. /doctor/queue provides the full filtered view.
+14. Call Next checks pause state, reuses an already-called active token where applicable, chooses the deterministic first eligible waiting token, and atomically changes WAITING to CALLED.
+15. The next patient poll changes the heading to "It's your turn" and displays "Please proceed to the consultation area."
+16. The doctor can call again, start consultation, requeue, skip, mark no-show, complete consultation, pause the queue, or resume it when the current state permits.
+17. Start changes the token to IN_CONSULTATION and the Visit to IN_PROGRESS.
+18. Complete changes the token to COMPLETED and closes the Visit with a completion timestamp.
+19. Every runtime mutation writes a queue event and/or Phase 10 AuditLog record without copying chief complaints or other unnecessary clinical content into the audit metadata.
+
+DOMAIN MODEL
+============
+
+QueueCounter
+- id
+- queueKey: logical queue/department key; Phase 14 uses A by default
+- queueDate: clinic-local day
+- nextValue: next atomic sequence source
+- paused
+- updatedAt
+- unique(queueKey, queueDate)
+
+QueueEntry
+- id
+- queueKey and queueDate
+- sequence and formatted tokenNumber
+- patientId -> existing PatientProfile
+- visitId -> existing Visit; unique for idempotency
+- optional doctorId -> existing User
+- status
+- priority
+- source
+- createdAt, calledAt, consultationStartedAt, completedAt, updatedAt
+- unique(queueKey, queueDate, sequence)
+
+QueueEvent
+- id
+- tokenId -> QueueEntry
+- action
+- actorId and actorRole
+- occurredAt
+- non-sensitive metadata
+
+No duplicate patient or visit model was introduced. Position and wait estimate are deliberately calculated, not stored stale in a frontend.
+
+STATE MACHINE
+=============
+
+WAITING -> CALLED
+WAITING -> CANCELLED
+WAITING -> NO_SHOW
+WAITING -> SKIPPED
+
+CALLED -> WAITING       (requeue)
+CALLED -> IN_CONSULTATION
+CALLED -> NO_SHOW
+CALLED -> SKIPPED
+CALLED -> CALLED        (explicit audited recall only)
+
+IN_CONSULTATION -> COMPLETED
+
+COMPLETED, CANCELLED, NO_SHOW, and SKIPPED are terminal. They cannot be called again. The frontend submits named commands; it never supplies an arbitrary next status.
+
+QUEUE ORDER
+===========
+
+The algorithm is deterministic:
+
+1. PRIORITY_REVIEW first.
+2. Earlier check-in creation time next.
+3. Entry ID as the stable tie-breaker.
+
+PRIORITY_REVIEW is derived only from an already stored HIGH RiskSignal whose status is OPEN or ACKNOWLEDGED and whose category is not the future-only placeholder. The visible language is "Priority review," never "emergency diagnosis." No LLM controls ordering.
+
+POSITION AND WAIT ESTIMATE
+==========================
+
+The API uses the same priority/arrival ordering for the patient. Only currently WAITING entries appear in that position. The initial estimate is:
+
+patients ahead * 6 minutes
+
+The result is displayed as an approximation such as "~12 min" with an explicit non-guarantee. A future service can use configured clinic performance without changing the patient contract.
+
+CONCURRENCY AND RETRIES
+=======================
+
+- Check-in uses a PostgreSQL serializable transaction.
+- QueueCounter uses atomic upsert/increment.
+- QueueEntry.visitId is unique.
+- queueKey + queueDate + sequence is unique.
+- Serialization and uniqueness conflicts are retried at the service boundary.
+- Call Next uses a serializable transaction and a compare-and-set update restricted to status WAITING.
+- A losing caller writes no transition/event and retries against current data.
+- Repeated Call Next returns the currently active CALLED token for the authorized scope rather than advancing inconsistently.
+- All transitions compare the status read by the service with the status still stored during update.
+
+PATIENT EXPERIENCE
+==================
+
+Route: /patient/waiting
+
+Shows only:
+- own token number
+- own status
+- currently serving public token number
+- patients ahead
+- estimated wait
+- queue moving/paused state
+- calm called-state instruction
+
+It uses large type, high contrast, aria-live status, semantic loading/error regions, large touch targets, and responsive mobile/tablet/kiosk sizing. It does not expose patient names, doctor notes, risk rule IDs, AI metadata, or other patients' clinical information.
+
+DOCTOR EXPERIENCE
+=================
+
+The Phase 13 dashboard embeds the live operational queue. Rows show token, authorized patient, age, chief complaint, priority label, wait time, status, and currently permitted actions. The full /doctor/queue page provides All, Waiting, Called, In Consultation, Priority Review, and Completed filters. Call Next and pause/resume remain available in the queue header.
+
+Filtering is presentation-only over the server-authorized result. It does not change ordering or security. The model carries queueKey and optional doctorId so additional clinic/department/doctor queues can be introduced without replacing QueueEntry.
+
+API
+===
+
+Patient credential: x-session-token
+- POST /api/v1/patient/check-in
+- GET  /api/v1/patient/me/queue-status
+
+Doctor credential: x-doctor-token
+- GET  /api/v1/doctor/queue
+- POST /api/v1/doctor/queue/call-next
+- POST /api/v1/doctor/queue/pause
+- POST /api/v1/doctor/queue/resume
+- POST /api/v1/doctor/tokens/:tokenId/call
+- POST /api/v1/doctor/tokens/:tokenId/recall
+- POST /api/v1/doctor/tokens/:tokenId/start
+- POST /api/v1/doctor/tokens/:tokenId/complete
+- POST /api/v1/doctor/tokens/:tokenId/skip
+- POST /api/v1/doctor/tokens/:tokenId/no-show
+- POST /api/v1/doctor/tokens/:tokenId/cancel
+- POST /api/v1/doctor/tokens/:tokenId/requeue
+
+SECURITY
+========
+
+- Patient identity comes from a signed session token.
+- Doctor identity and role come from a signed doctor token plus an active User lookup.
+- Query/body patientId, doctorId, and role values are ignored for queue authorization.
+- A non-admin doctor is restricted to patients with an active assignment.
+- Token actions recheck assignment against the QueueEntry's patient.
+- Patients have no route for doctor commands.
+- Queue pause blocks both new calls and recalls.
+- Standard validation rejects unknown actions.
+- Queue events/audits contain operational metadata rather than copied clinical narratives.
+
+UPDATE PROVIDER
+===============
+
+QueueNotificationProvider is the abstraction point. InAppQueueNotificationProvider accompanies visible-tab polling in Phase 14, so paid SMS/push infrastructure is not required. A failed notification provider cannot roll back or corrupt an already persisted queue transition. WebSocket, SSE, SMS, push, or web notification adapters can be added later.
+
+SYNTHETIC DEMO
+==============
+
+The seed includes queue A on 2026-09-13:
+- A-001: Aarav Sharma, WAITING, PRIORITY_REVIEW
+- A-002: Priya Patel, WAITING, NORMAL
+- A-003: Rohan Verma, IN_CONSULTATION, NORMAL
+
+All are explicitly synthetic. Visit token numbers are synchronized with queue tokens, the counter starts after the seeded sequence, and synthetic TOKEN_CREATED events are included.
+
+To run:
+
+1. Copy .env.example to .env and configure PostgreSQL.
+2. Run pnpm install.
+3. Run pnpm db:generate.
+4. Run pnpm db:migrate.
+5. Run pnpm db:seed.
+6. Run pnpm dev.
+7. Open http://localhost:3000/doctor and sign in as demo.doctor with DOCTOR_DEMO_ACCESS_CODE (default helios-demo-doctor).
+8. Open a patient intake, complete required steps, submit, and follow the waiting link.
+9. Use Call Next in the doctor dashboard and observe the patient page update within approximately eight seconds.
+10. Start and complete the consultation from the doctor queue.
+
+VALIDATION COVERAGE
+===================
+
+Automated unit/API/UI coverage includes duplicate-submit behavior, backend position/estimate, priority ordering, compare-and-set race retry, patient token isolation, doctor credential separation, assignment authorization, terminal transition rejection, queue pause behavior, validated action routes, patient waiting rendering/recovery, doctor Call Next, and full-queue filters.
+
+A TEST_DATABASE_URL-gated PostgreSQL integration suite additionally exercises simultaneous submit, distinct atomic daily sequences, simultaneous Call Next, one called transition, and one TOKEN_CALLED audit record. It runs only after the Phase 14 migration is applied to that test database.
+
+DEPLOYMENT LIMITS / NEXT WORK
+=============================
+
+- This development machine has no configured PostgreSQL connection. Prisma schema/client validation and all non-database automated tests are complete, but migration/seed execution and the gated two-connection transaction tests still require a live test database.
+- The default queue key is currently A at the service configuration boundary. Persisted models are multi-queue ready; clinic, department, room, schedule, and per-doctor routing configuration are future work.
+- Production identity, SSO, fine-grained clinic tenancy, and admin configuration remain future work.
+- The optional public waiting-room display page is not part of this implementation.
+- SMS/push/WebSocket/SSE providers are not configured; the in-app polling fallback is implemented.
+- Estimate tuning from historical consultation duration is future work.
+- The Phase 5 SafetyEngine remains unimplemented; Phase 14 only consumes explicitly stored deterministic signals.
+
+KEY SOURCE LOCATIONS
+====================
+
+- apps/api/prisma/schema.prisma
+- apps/api/prisma/migrations/20260914090000_waiting_tokens/migration.sql
+- apps/api/src/queue/queue-repository.ts
+- apps/api/src/queue/queue-service.ts
+- apps/api/src/queue/notification-provider.ts
+- apps/api/src/routes/queue.ts
+- apps/web/src/app/patient/waiting/page.tsx
+- apps/web/src/components/doctor/operational-queue.tsx
+- apps/web/src/app/doctor/queue/page.tsx
+- docs/queue/architecture.md
+

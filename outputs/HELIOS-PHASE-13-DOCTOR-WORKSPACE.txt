@@ -1,0 +1,165 @@
+HELIOS PHASE 13 — DOCTOR DASHBOARD / DOCTOR WORKSPACE
+Implementation and handoff guide — 2026-09-13
+
+1. PURPOSE AND CLINICAL BOUNDARY
+HELIOS is a consent-first, AI-assisted clinical intake and doctor-copilot system.
+The patient supplies information; the backend preserves source and uncertainty;
+the doctor reviews evidence, verifies/corrects, consults and decides. This is
+not an AI doctor. It does not diagnose, prescribe, recommend treatment or
+autonomously respond to emergencies. No regulatory-compliance claim is made.
+
+2. APPLICATION SHAPE
+Patient routes: apps/web/src/app/patient/*
+Doctor routes: apps/web/src/app/doctor/*
+Both consume the same Express API at /api/v1 and the same PostgreSQL/Prisma
+clinical database. The doctor layout, navigation, auth state and API service
+are doctor-only modules. The patient route tree does not render doctor notes,
+verification history, audit logs or doctor consultation controls.
+
+3. DOCTOR FLOW
+Open /doctor -> redirect to /doctor/login if no session -> sign in using
+synthetic demo credentials -> dashboard -> search/filter/sort today's queue ->
+open assigned patient -> Clinical Brief / What Changed / Safety / Documents &
+Evidence / Timeline / AI Insights / Verification History / Notes -> open
+existing Verification Center for verify/correct/reject/uncertain/conflict
+resolution -> start/review/verify/complete consultation with server-approved
+state transitions. AYUSH review is linked from the patient workspace.
+
+4. SECURITY MODEL
+The browser sends x-doctor-token. The API HMAC-verifies the doctor-specific
+proof, resolves an ACTIVE DOCTOR or ADMIN user, and never accepts a browser
+doctorId, role or userId as authority. Patient session proofs have different
+signatures and fail doctor authorization. New Phase 13 queue queries are
+filtered to active DoctorPatientAssignment rows; workspace, notes and visit
+status operations check assignment. Admin bypass is explicit. Note edits
+require author identity or ADMIN and the path patient ID. Visit writes use an
+expected-state conditional update to reject concurrent state changes.
+
+The demo sign-in uses DOCTOR_DEMO_ACCESS_CODE and a sessionStorage token.
+It is NOT production clinician authentication. Before real PHI or multiple
+institutions: add an identity provider, short-lived/revocable sessions,
+care-team/tenant policy across ALL legacy doctor endpoints, request rate
+limits, stronger token transport and a privacy/compliance review. Earlier
+Phase 8–12 doctor endpoints authenticate an active doctor but do not yet use
+the new assignment filter; this is an explicit deployment blocker for
+multi-clinician isolation, not a claimed finished feature.
+
+5. DASHBOARD DATA
+GET /api/v1/doctor/dashboard accepts bounded search, status, sort,
+direction, page and limit. Search covers name, patient code, phone, chief
+complaint and symptom labels. Results are assigned-doctor scoped and bounded
+to 250 candidate visits, then sorted/paginated. Metrics are calculated from
+the unfiltered queue, not the current search result. Notifications derive
+from stored safety signals, pending verification and documents; previews
+use patient codes rather than names. There is no separate notification table
+or push delivery. The client debounces search by 300 ms.
+
+Current-day scope uses the server's local calendar day. If there are no
+assigned visits dated today and DEMO_MODE is enabled, recent active synthetic
+visits appear with a visible RECENT_ACTIVE_DEMO_FALLBACK banner. This is a
+demo convenience, not a scheduling integration.
+
+6. WORKSPACE DATA
+GET /api/v1/doctor/patients/:patientId/workspace optionally selects a visit
+via visitId. The visit query always includes patientId. The response composes:
+- Phase 9 ClinicalBrief via its existing service, version/status and source-
+  linked claims; unavailable/insufficient source remains explicit.
+- Phase 8 What Changed via its existing deterministic comparison service;
+  comparison is unavailable if fewer than two visits exist.
+- Stored RiskSignal records only. Placeholder FUTURE_DEMO_ONLY signals are
+  hidden. Phase 5 SafetyEngine is not implemented. No signal is not proof of
+  safety. All displayed signals say "Requires clinical review."
+- Up to 20 non-deleted documents and extracted facts/page evidence; source
+  document preview calls the existing doctor content endpoint.
+- Up to 75 timeline events; presentation does not recalculate history.
+- Up to 50 existing verification-history entries and 100 doctor notes.
+- Existing structured interview missing/conflict information and counts,
+  labelled AI-STRUCTURED / REQUIRES VERIFICATION.
+Opening a patient records DOCTOR_PATIENT_OPENED in AuditLog. The component
+provides loading, error and empty states, keyboard-operable tabs and large
+targets. Source provenance remains visible in brief claims and document facts.
+
+7. DOCTOR NOTES AND CONSULTATION STATE
+DoctorNote is a separate model with patientId, optional visitId, authorId,
+content, createdAt and updatedAt. Notes do not overwrite patient statements.
+Create/edit is attributed and recorded transactionally in existing AuditLog.
+Only author/admin may edit. Valid transitions are:
+WAITING -> IN_PROGRESS
+READY_FOR_DOCTOR -> IN_PROGRESS or UNDER_REVIEW
+IN_PROGRESS -> UNDER_REVIEW or COMPLETED
+UNDER_REVIEW -> VERIFIED or COMPLETED
+VERIFIED -> COMPLETED
+COMPLETED/CANCELLED -> no further transition here.
+VISIT_STATUS_CHANGED is audited with previous/new state.
+
+8. API ROUTES
+POST   /api/v1/doctor-sessions                          demo sign-in
+GET    /api/v1/doctor/dashboard                         queue/metrics
+GET    /api/v1/doctor/patients/:patientId/workspace     combined view
+GET    /api/v1/doctor/patients/:patientId/notes         notes
+POST   /api/v1/doctor/patients/:patientId/notes         create note
+PATCH  /api/v1/doctor/patients/:patientId/notes/:noteId edit note
+POST   /api/v1/doctor/visits/:visitId/status            state transition
+Existing Phase 10 verification endpoints remain authoritative for verify,
+correct, reject, mark uncertain and explicit conflict decisions. The doctor
+UI links to that center, rather than adding a competing verification model.
+
+9. DATABASE AND SEED
+Migration 20260913090000_doctor_dashboard adds DoctorNote.
+Migration 20260913091500_doctor_patient_assignments adds assignment rows and
+unique doctor/patient constraint. Schema and generated Prisma client validate.
+Seed creates active assignments for synthetic doctor demo.doctor to Aarav,
+Priya and Rohan. Aarav has two visits, document facts, a stored synthetic
+HIGH review signal and a doctor note. Priya/Rohan have synthetic queue visits.
+The older FUTURE_DEMO_ONLY placeholder is excluded from Phase 13 safety UI.
+Seeded demo:// document paths are metadata fixtures; original document
+preview may fail for those fixtures until actual bytes are supplied.
+
+10. KEY FILES
+apps/api/src/doctor-dashboard/doctor-dashboard-service.ts
+apps/api/src/repositories/doctor-dashboard-repository.ts
+apps/api/src/controllers/doctor-dashboard-controller.ts
+apps/api/src/routes/doctor-dashboard.ts
+apps/api/src/validation/doctor-dashboard.ts
+apps/api/src/services/doctor-dashboard-services.ts
+apps/api/prisma/schema.prisma and prisma/migrations/*doctor*
+apps/api/prisma/seed.ts
+apps/web/src/app/doctor/page.tsx
+apps/web/src/app/doctor/login/page.tsx
+apps/web/src/app/doctor/patients/[patientId]/page.tsx
+apps/web/src/app/doctor/layout.tsx
+apps/web/src/components/doctor/doctor-shell.tsx
+apps/web/src/providers/doctor-auth-provider.tsx
+apps/web/src/services/doctor-dashboard.ts
+packages/shared/src/index.ts
+docs/doctor-dashboard/architecture.md and api.md
+
+11. SETUP AND RUN
+Prerequisites: Node.js 20+, pnpm, PostgreSQL 15+.
+From repository root:
+  pnpm install
+  Copy .env.example to .env and set DATABASE_URL.
+  pnpm db:generate
+  pnpm db:migrate
+  pnpm db:seed
+  pnpm dev
+Open http://localhost:3000/doctor. Demo username: demo.doctor.
+Default demo access code: helios-demo-doctor, or use the configured
+DOCTOR_DEMO_ACCESS_CODE. Do not use the default in production.
+
+12. VALIDATION AND CURRENT LIMITS
+Schema generation and validation, TypeScript typecheck, ESLint and production
+Next.js/API build passed. API: 217 tests passed; 5 database-gated integration
+tests skipped. Web: 29 tests passed. The workspace has no DATABASE_URL in
+this environment: db:check returned not_configured, so migrations, seed and
+live doctor data flows were not run against PostgreSQL. There is no verified
+live screenshot. To capture a demo, configure PostgreSQL, migrate/seed/start,
+sign in, open /doctor, choose Aarav, and capture desktop widths 1280/1440/1920
+and a tablet width after checking for overflow and source labels.
+
+Remaining work: production identity/care-team authorization across legacy
+doctor endpoints; real scheduling/notifications/messages/reports/knowledge
+base/settings; document-view audit; original bytes for demo documents;
+patient workspace timeline filters/grouping; deeper UI tests for every tab;
+real-database integration and browser accessibility/visual QA. The sidebar
+marks unimplemented areas disabled rather than offering false destinations.
