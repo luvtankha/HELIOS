@@ -122,6 +122,7 @@ export class ClinicalBriefRepository {
       where: { id: visitId, patientId },
       include: {
         clinicalHistory: true,
+        session: { select: { heliosIntakeFacts: { orderBy: { createdAt: "asc" } } } },
         symptoms: {
           where: {
             verificationStatus: {

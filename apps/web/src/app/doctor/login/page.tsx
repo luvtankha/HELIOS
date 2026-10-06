@@ -20,7 +20,7 @@ function DoctorLoginForm() {
   const auth = useDoctorAuth();
   const router = useRouter();
   const search = useSearchParams();
-  const [username, setUsername] = useState("demo.doctor");
+  const [username, setUsername] = useState(publicConfig.demoMode ? "demo.doctor" : "");
   const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);

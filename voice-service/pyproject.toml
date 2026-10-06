@@ -1,0 +1,28 @@
+[project]
+name = "helios-voice-benchmark"
+version = "0.1.0"
+description = "HELIOS full-duplex Hindi/Hinglish voice gateway and benchmark harness"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115,<1",
+    "httpx>=0.27,<1",
+    "uvicorn[standard]>=0.34,<1",
+    "google-genai>=1.0,<3",
+]
+
+[project.scripts]
+helios-voice-bench = "helios_voice_bench.cli:main"
+helios-voice-gateway = "helios_voice_bench.gateway.main:main"
+
+[project.optional-dependencies]
+human1 = [
+    "moshi>=0.2.8,<0.3",
+    "torch>=2.4,<3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/helios_voice_bench"]

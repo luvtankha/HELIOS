@@ -6,11 +6,11 @@ import LanguagePage from "./language/page";
 import ListeningPage from "./listening/page";
 import PatientWelcomePage from "./page";
 import ReviewPage from "./review/page";
-import { PatientFlowProvider } from "@/providers/patient-flow-provider";
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   replace: vi.fn(),
+  redirect: vi.fn(),
   chooseLanguage: vi.fn(async () => undefined),
   acceptConsent: vi.fn(async () => undefined),
   saveDetails: vi.fn(async () => undefined),
@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.push, replace: mocks.replace }),
+  redirect: mocks.redirect,
 }));
 
 const guardedFlow = {
@@ -67,18 +68,9 @@ describe("patient experience", () => {
     sessionStorage.clear();
   });
 
-  it("renders the patient welcome screen", () => {
-    render(
-      <PatientFlowProvider>
-        <PatientWelcomePage />
-      </PatientFlowProvider>,
-    );
-    expect(
-      screen.getByRole("heading", { name: "Tell us how you’re feeling." }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Start check-in" }),
-    ).toBeInTheDocument();
+  it("routes the patient entry to the live doctor consultation", () => {
+    PatientWelcomePage();
+    expect(mocks.redirect).toHaveBeenCalledWith("/patient/live");
   });
 
   it("selects and persists Hindi before navigating", async () => {
@@ -121,63 +113,6 @@ describe("patient experience", () => {
     );
     await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce());
     expect(mocks.push).toHaveBeenCalledWith("/patient/complete");
-  });
-
-  it("resumes a persisted session at the saved step", async () => {
-    sessionStorage.setItem("helios.patient.token.v1", "valid-test-token");
-    localStorage.setItem(
-      "helios.patient.session.v1",
-      JSON.stringify({
-        sessionId: "cm123456789012345678901234",
-        currentStep: "REVIEW",
-        language: "en",
-      }),
-    );
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => ({
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: {
-            id: "cm123456789012345678901234",
-            status: "READY_FOR_REVIEW",
-            currentStep: "REVIEW",
-            language: "en",
-            lastActiveAt: new Date(0).toISOString(),
-          },
-        }),
-      })),
-    );
-    render(
-      <PatientFlowProvider>
-        <PatientWelcomePage />
-      </PatientFlowProvider>,
-    );
-    const resume = await screen.findByRole("button", {
-      name: "Continue previous session",
-    });
-    await waitFor(() => expect(resume).toBeEnabled());
-    fireEvent.click(resume);
-    await waitFor(() =>
-      expect(mocks.push).toHaveBeenCalledWith("/patient/review"),
-    );
-  });
-
-  it("keeps input safe when the API is unavailable", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => Promise.reject(new Error("offline"))),
-    );
-    render(
-      <PatientFlowProvider>
-        <PatientWelcomePage />
-      </PatientFlowProvider>,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Start check-in" }));
-    expect(
-      await screen.findByText(/Anything you entered is still on this device/),
-    ).toBeInTheDocument();
   });
 
   it("keeps text entry available when voice cannot be used", () => {

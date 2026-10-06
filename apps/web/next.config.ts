@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+const voiceOrigin =
+  process.env.NEXT_PUBLIC_VOICE_RUNTIME_URL ?? "http://localhost:9090";
+const patientOrigin =
+  process.env.NEXT_PUBLIC_PATIENT_API_V2_URL ?? "http://localhost:8080";
+const voiceWebSocketOrigin = voiceOrigin
+  .replace(/^http:/, "ws:")
+  .replace(/^https:/, "wss:");
 const production = process.env.NODE_ENV === "production";
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -10,7 +17,7 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   "media-src 'self' blob:",
   "frame-src 'self' blob:",
-  `connect-src 'self' ${apiOrigin}`,
+  `connect-src 'self' ${apiOrigin} ${patientOrigin} ${voiceOrigin} ${voiceWebSocketOrigin}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

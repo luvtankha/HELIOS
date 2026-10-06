@@ -42,6 +42,97 @@ function repository(transaction: Record<string, unknown>) {
 }
 
 describe("VerificationRepository transaction integrity", () => {
+  it("filters every fact source by exact identity before its history limit", async () => {
+    const models = [
+      "medication",
+      "allergy",
+      "observation",
+      "documentFact",
+      "symptom",
+      "clinicalHistory",
+      "interviewResponse",
+      "ayushRecord",
+      "heliosIntakeFact",
+    ];
+    const delegates = Object.fromEntries(
+      models.map((name) => [name, { findMany: vi.fn(async () => []) }]),
+    );
+    await new VerificationRepository(
+      delegates as unknown as PrismaClient,
+    ).listFacts("patient", undefined, "older-live");
+    for (const model of models)
+      expect(delegates[model]!.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: "older-live" }),
+        }),
+      );
+  });
+
+  it("rejects another doctor's idempotency key even inside the transaction", async () => {
+    const value = repository({
+      doctorVerification: {
+        findUnique: vi.fn(async () => ({
+          ...mutation,
+          verifiedBy: "another-doctor",
+        })),
+      },
+    });
+    await expect(value.apply(mutation, fact)).rejects.toMatchObject({
+      code: "IDEMPOTENCY_KEY_REUSED",
+    });
+  });
+
+  it("versions native intake corrections and preserves immutable voice provenance", async () => {
+    const updateMany = vi.fn(async () => ({ count: 1 }));
+    const create = vi.fn(async ({ data }) => ({ ...data, id: "verification" }));
+    const value = repository({
+      heliosIntakeFact: { updateMany },
+      doctorVerification: { findUnique: vi.fn(async () => null), create },
+      auditLog: { create: vi.fn() },
+      clinicalBrief: { updateMany: vi.fn() },
+      comparison: { updateMany: vi.fn() },
+    });
+    const native = {
+      ...fact,
+      factType: "LIVE_INTAKE_FACT" as const,
+      sourceType: "PATIENT_REPORTED" as const,
+      value: { value: "3/10", knowledgeState: "KNOWN" },
+    };
+    await value.apply(
+      {
+        ...mutation,
+        factType: "LIVE_INTAKE_FACT",
+        correctedValue: { value: "4/10", knowledgeState: "KNOWN" },
+      },
+      native,
+    );
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "fact",
+          patientSession: { patientId: "patient" },
+          verificationVersion: 2,
+        },
+        data: expect.objectContaining({
+          value: "4/10",
+          knowledgeState: "KNOWN",
+          verificationStatus: "DOCTOR_CORRECTED",
+          verificationVersion: { increment: 1 },
+        }),
+      }),
+    );
+    expect(updateMany.mock.calls[0]?.[0].data).not.toHaveProperty(
+      "evidenceTurnIds",
+    );
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          originalValue: native.value,
+          factType: "LIVE_INTAKE_FACT",
+        }),
+      }),
+    );
+  });
   it("uses optimistic fact versioning and rejects a stale concurrent action", async () => {
     const updateMany = vi.fn(async () => ({ count: 0 }));
     const value = repository({

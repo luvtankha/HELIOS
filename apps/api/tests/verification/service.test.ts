@@ -132,6 +132,109 @@ function harness(overrides: Record<string, unknown> = {}) {
 }
 
 describe("VerificationService", () => {
+  it("reviews and changes an exact fact even when capped history omits it", async () => {
+    const native = medication({
+      factType: "LIVE_INTAKE_FACT",
+      factId: "older-live",
+      normalizedKey: "severity",
+      value: { value: "3/10", knowledgeState: "KNOWN" },
+    });
+    const listFacts = vi.fn(
+      async (_patientId?: string, _allowed?: string[], factId?: string) =>
+        factId === native.factId ? [native] : [],
+    );
+    const { service, repository } = harness({ listFacts });
+    const id = Buffer.from("LIVE_INTAKE_FACT:older-live").toString("base64url");
+    expect((await service.detail(id, "patient", token)).factId).toBe(
+      native.factId,
+    );
+    await service.act(
+      id,
+      "VERIFY",
+      {
+        expectedVersion: 0,
+        idempotencyKey: "00000000-0000-4000-8000-000000000029",
+      },
+      token,
+    );
+    expect(repository.apply).toHaveBeenCalledWith(
+      expect.objectContaining({ factId: native.factId }),
+      native,
+    );
+    expect(listFacts).toHaveBeenCalledWith(undefined, undefined, native.factId);
+    expect(listFacts).toHaveBeenCalledWith("patient");
+  });
+
+  it("exposes native voice evidence and accepts valid clinician corrections", async () => {
+    const native = medication({
+      factType: "LIVE_INTAKE_FACT",
+      factId: "live",
+      normalizedKey: "severity",
+      value: { value: "3/10", knowledgeState: "KNOWN" },
+      evidence: [
+        { kind: "VOICE", sourceId: "turn-1", label: "Native voice turn" },
+      ],
+    });
+    const { service, repository } = harness({
+      listFacts: vi.fn(async () => [native]),
+    });
+    const id = Buffer.from("LIVE_INTAKE_FACT:live").toString("base64url");
+    const queue = await service.queue("patient", { limit: 100 }, token);
+    expect(queue.items[0]).toMatchObject({
+      factType: "LIVE_INTAKE_FACT",
+      evidenceAvailable: true,
+      bulkEligible: false,
+    });
+    const detail = await service.detail(id, "patient", token);
+    expect(detail.evidence[0]?.sourceId).toBe("turn-1");
+    await service.act(
+      id,
+      "CORRECT",
+      {
+        expectedVersion: 0,
+        idempotencyKey: "00000000-0000-4000-8000-000000000018",
+        reason: "Patient clarifies intensity",
+        correctedValue: { value: "4/10", knowledgeState: "KNOWN" },
+      },
+      token,
+    );
+    expect(repository.apply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        factType: "LIVE_INTAKE_FACT",
+        correctedValue: { value: "4/10", knowledgeState: "KNOWN" },
+      }),
+      native,
+    );
+  });
+
+  it.each([
+    { value: "", knowledgeState: "KNOWN" },
+    { value: null, knowledgeState: "YES" },
+    { value: "4/10", knowledgeState: "KNOWN", patientId: "other" },
+    { value: "4/10" },
+  ])("rejects malformed native fact correction %j", async (correctedValue) => {
+    const native = medication({ factType: "LIVE_INTAKE_FACT", factId: "live" });
+    const { service, repository } = harness({
+      listFacts: vi.fn(async () => [native]),
+    });
+    await expect(
+      service.act(
+        Buffer.from("LIVE_INTAKE_FACT:live").toString("base64url"),
+        "CORRECT",
+        {
+          expectedVersion: 0,
+          idempotencyKey: "00000000-0000-4000-8000-000000000019",
+          reason: "Patient clarified",
+          correctedValue,
+        },
+        token,
+      ),
+    ).rejects.toMatchObject({
+      code: "LIVE_INTAKE_CORRECTION_INVALID",
+      statusCode: 400,
+    });
+    expect(repository.apply).not.toHaveBeenCalled();
+  });
   it("requires a signed doctor and never accepts browser doctor identity", async () => {
     const { service } = harness();
     await expect(

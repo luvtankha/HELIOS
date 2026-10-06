@@ -1,4 +1,6 @@
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+const patientApiV2Url =
+  process.env.NEXT_PUBLIC_PATIENT_API_V2_URL ?? "http://localhost:8080";
 const voiceMaxDurationSeconds = Number(
   process.env.NEXT_PUBLIC_VOICE_MAX_DURATION_SECONDS ?? 75,
 );
@@ -9,6 +11,7 @@ const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
 export const publicConfig = Object.freeze({
   apiUrl,
+  patientApiV2Url,
   voiceMaxDurationSeconds,
   voiceMaxFileBytes,
   demoMode,

@@ -10,7 +10,7 @@ import type {
   VerificationQueueItemDto,
   VerificationReviewDto,
 } from "@helios/shared";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EvidenceViewer } from "@/components/documents/evidence-viewer";
 import { useDoctorAuth } from "@/providers/doctor-auth-provider";
 import { verificationApi } from "@/services/verification";
@@ -24,6 +24,7 @@ const filters: Array<{ label: string; value: VerificationFactType | "ALL" }> = [
   { label: "Symptoms", value: "SYMPTOM" },
   { label: "Observations", value: "OBSERVATION" },
   { label: "Patient reported", value: "INTERVIEW_RESPONSE" },
+  { label: "Live intake", value: "LIVE_INTAKE_FACT" },
   { label: "AYUSH", value: "AYUSH_RECORD" },
 ];
 
@@ -37,9 +38,11 @@ export default function VerificationPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const loadVersion = useRef(0);
 
   const load = useCallback(async () => {
     if (!session) return;
+    const version = ++loadVersion.current;
     setLoading(true);
     setError("");
     const query = new URLSearchParams();
@@ -47,23 +50,30 @@ export default function VerificationPage() {
     if (conflictsOnly) query.set("conflictsOnly", "true");
     if (search.trim()) query.set("search", search.trim());
     try {
-      setQueue(
-        await verificationApi.queue(session.doctorToken, query.toString()),
+      const result = await verificationApi.queue(
+        session.doctorToken,
+        query.toString(),
       );
+      if (version === loadVersion.current) setQueue(result);
     } catch (reason) {
+      if (version !== loadVersion.current) return;
       setError(
         reason instanceof Error
           ? reason.message
           : "Verification queue is unavailable.",
       );
     } finally {
-      setLoading(false);
+      if (version === loadVersion.current) setLoading(false);
     }
   }, [conflictsOnly, filter, search, session]);
 
+  const invalidateLoad = useCallback(() => {
+    loadVersion.current++;
+  }, []);
   useEffect(() => {
     void load();
-  }, [load]);
+    return invalidateLoad;
+  }, [load, invalidateLoad]);
 
   async function open(item: VerificationQueueItemDto) {
     if (!session) return;
@@ -644,13 +654,35 @@ function CorrectionEditor({
         {fields.map((field) => (
           <label key={field} className="text-xs font-bold text-ink/55">
             {human(field)}
-            <input
-              value={scalar(value[field])}
-              onChange={(event) =>
-                onChange({ ...value, [field]: event.target.value })
-              }
-              className="mt-1 w-full rounded-xl border border-ink/15 px-3 py-2 text-sm font-normal text-ink"
-            />
+            {field === "knowledgeState" ? (
+              <select
+                value={scalar(value[field])}
+                onChange={(event) =>
+                  onChange({ ...value, knowledgeState: event.target.value })
+                }
+                className="mt-1 w-full rounded-xl border border-ink/15 px-3 py-2 text-sm font-normal text-ink"
+              >
+                {["KNOWN", "UNKNOWN", "CONFLICT", "MISSING"].map((state) => (
+                  <option key={state} value={state}>
+                    {human(state)}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                value={scalar(value[field])}
+                onChange={(event) =>
+                  onChange({
+                    ...value,
+                    [field]:
+                      factType === "LIVE_INTAKE_FACT" && !event.target.value
+                        ? null
+                        : event.target.value,
+                  })
+                }
+                className="mt-1 w-full rounded-xl border border-ink/15 px-3 py-2 text-sm font-normal text-ink"
+              />
+            )}
           </label>
         ))}
       </div>
@@ -666,6 +698,7 @@ const correctionFields: Record<VerificationFactType, string[]> = {
   OBSERVATION: ["display", "value", "unit"],
   DOCUMENT_FACT: ["name", "value", "unit"],
   INTERVIEW_RESPONSE: ["value"],
+  LIVE_INTAKE_FACT: ["value", "knowledgeState"],
   AYUSH_RECORD: [
     "system",
     "useStatus",

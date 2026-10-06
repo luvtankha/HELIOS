@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import colors from "tailwindcss/colors";
 
 export default {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
@@ -7,9 +8,9 @@ export default {
       colors: {
         ink: "#0b2748",
         ocean: "#17678b",
-        teal: "#13876f",
+        teal: { ...colors.teal, DEFAULT: "#13876f" },
         mist: "#eef7f6",
-        amber: "#eca52e",
+        amber: { ...colors.amber, DEFAULT: "#eca52e" },
       },
       borderRadius: { card: "1.5rem" },
       boxShadow: { soft: "0 24px 60px rgba(11, 39, 72, 0.10)" },

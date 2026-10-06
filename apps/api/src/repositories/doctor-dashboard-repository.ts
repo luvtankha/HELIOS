@@ -2,6 +2,9 @@ import type { Prisma, PrismaClient, VisitStatus } from "@prisma/client";
 import { requireDatabase } from "./database.js";
 
 const queueVisitInclude = {
+  session: {
+    select: { heliosIntakeFacts: { select: { field: true, value: true, verificationStatus: true } } },
+  },
   patient: {
     select: {
       id: true,
@@ -158,6 +161,46 @@ export class DoctorDashboardRepository {
                 verificationStatus: true,
               },
             },
+          },
+        },
+      },
+    });
+  }
+
+  async liveIntake(patientId: string, visitId: string) {
+    requireDatabase();
+    return this.prisma.patientSession.findFirst({
+      where: {
+        patientId,
+        visitId,
+        heliosIntakeFacts: { some: {} },
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        language: true,
+        status: true,
+        routingDecisions: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { result: true },
+        },
+        heliosIntakeFacts: {
+          orderBy: [{ updatedAt: "asc" }, { id: "asc" }],
+          select: {
+            id: true,
+            field: true,
+            value: true,
+            knowledgeState: true,
+            confidence: true,
+            verificationStatus: true,
+            verificationVersion: true,
+            source: true,
+            evidenceTurnIds: true,
+            model: true,
+            modelVersion: true,
+            conversationPolicyVersion: true,
+            updatedAt: true,
           },
         },
       },

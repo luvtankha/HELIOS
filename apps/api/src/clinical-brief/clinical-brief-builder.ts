@@ -10,7 +10,7 @@ import type {
   BuiltBrief,
 } from "./types.js";
 
-export const CLINICAL_BRIEF_GENERATOR_VERSION = "phase11-ayush-v1";
+export const CLINICAL_BRIEF_GENERATOR_VERSION = "native-intake-reviewed-v3";
 
 const sectionDefinitions: Array<[BriefSectionType, string, boolean, boolean]> =
   [
@@ -37,17 +37,16 @@ export class ClinicalBriefBuilder {
 
   build(input: BriefInput): BuiltBrief {
     const claims: BriefClaimDraft[] = [];
+    const claimKeys = new Set<string>();
+    const sectionCounts = new Map<BriefSectionType, number>();
     const add = (claim: Omit<BriefClaimDraft, "position">) => {
-      if (
-        !claim.evidence.length ||
-        claims.some((item) => item.claimKey === claim.claimKey)
-      )
-        return;
+      if (!claim.evidence.length || claimKeys.has(claim.claimKey)) return;
+      const position = sectionCounts.get(claim.sectionType) ?? 0;
+      claimKeys.add(claim.claimKey);
+      sectionCounts.set(claim.sectionType, position + 1);
       claims.push({
         ...claim,
-        position: claims.filter(
-          (item) => item.sectionType === claim.sectionType,
-        ).length,
+        position,
       });
     };
     add(this.patientClaim(input));
@@ -86,10 +85,37 @@ export class ClinicalBriefBuilder {
           ],
         }),
       );
+    const liveFacts = (input.liveFacts ?? []).filter((fact) => !["DOCTOR_REJECTED", "REJECTED", "SUPERSEDED"].includes(fact.verificationStatus ?? ""));
+    for (const fact of liveFacts) {
+      if (fact.knowledgeState === "NOT_ASKED") continue;
+      const section: BriefSectionType = fact.field === "chiefComplaint" ? "TODAYS_REASON"
+        : fact.field === "currentMedications" ? "MEDICATIONS"
+        : fact.field === "allergies" ? "ALLERGIES"
+        : /History$/.test(fact.field) ? "RELEVANT_HISTORY" : "CURRENT_SYMPTOMS";
+      const label = fact.field.replace(/([a-z])([A-Z])/g, "$1 $2");
+      const known = fact.knowledgeState === "KNOWN";
+      add({
+        claimKey: `live:${fact.id}`,
+        sectionType: known ? section : "NEEDS_VERIFICATION",
+        text: `${label.charAt(0).toUpperCase()}${label.slice(1)}: ${known ? fact.value ?? "Not documented" : `${human(fact.knowledgeState)}${fact.value ? ` (${fact.value})` : ""}`}.`,
+        structuredValue: fact,
+        sourceType: "PATIENT_REPORTED",
+        sourceId: fact.id,
+        verificationStatus: verifiedStatus(fact.verificationStatus ?? "PATIENT_REPORTED", "PATIENT_REPORTED"),
+        needsVerification: !doctorVerified(fact.verificationStatus ?? "PATIENT_REPORTED"),
+        evidence: [{
+          kind: "LIVE_INTAKE_FACT",
+          sourceId: fact.id,
+          label: "Patient-reported native voice intake",
+          sourceText: `Recorded value: ${fact.value ?? fact.knowledgeState}. Evidence turns: ${fact.evidenceTurnIds.join(", ") || "Not recorded"}`,
+        }],
+      });
+    }
     this.changeClaims(input).forEach(add);
     this.medicationClaims(input).forEach(add);
     this.ayushClaims(input).forEach(add);
-    this.allergyClaims(input).forEach(add);
+    if (input.allergies.length || !liveFacts.some((fact) => fact.field === "allergies" && fact.knowledgeState !== "NOT_ASKED"))
+      this.allergyClaims(input).forEach(add);
     input.observations
       .filter((item) => item.state !== "NOT_ASKED")
       .slice(0, 5)
@@ -201,6 +227,7 @@ export class ClinicalBriefBuilder {
           patient: input.patient,
           visit: input.visit,
           symptoms: input.symptoms,
+          liveFacts: input.liveFacts,
           medications: input.medications,
           allergies: input.allergies,
           observations: input.observations,

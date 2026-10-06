@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const id = z.string().trim().min(1).max(256);
 const factTypes = [
+  "LIVE_INTAKE_FACT",
   "CLINICAL_HISTORY",
   "SYMPTOM",
   "MEDICATION",

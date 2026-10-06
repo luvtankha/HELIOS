@@ -114,6 +114,7 @@ export class DoctorDashboardService implements DoctorDashboardOperations {
         row.patient.patientCode,
         row.patient.phone,
         row.clinicalHistory?.chiefComplaint,
+        ...row.session?.heliosIntakeFacts.map((fact) => fact.value) ?? [],
         ...row.symptoms.map((symptom) => symptom.name),
       ]
         .filter(Boolean)
@@ -198,6 +199,7 @@ export class DoctorDashboardService implements DoctorDashboardOperations {
       timeline,
       verificationHistory,
       notes,
+      liveIntake,
     ] = await Promise.all([
       optional(() => this.briefs.quick(patientId, visit.id, token, requestId)),
       optional(() => this.comparisons.quick(patientId, token, requestId)),
@@ -205,9 +207,18 @@ export class DoctorDashboardService implements DoctorDashboardOperations {
       this.timeline.listForDoctor(patientId, 75),
       this.verification.history(patientId, 50, token),
       this.repository.notes(patientId),
+      this.repository.liveIntake(patientId, visit.id),
     ]);
     const interviewState = object(visit.interview?.state);
     const unresolved = pendingCount(visit);
+    const liveFacts = liveIntake?.heliosIntakeFacts ?? [];
+    const routing = object(liveIntake?.routingDecisions?.[0]?.result);
+    const liveMissing = liveFacts
+      .filter((fact) => ["MISSING", "UNKNOWN"].includes(fact.knowledgeState))
+      .map((fact) => fact.field);
+    const liveConflicts = liveFacts
+      .filter((fact) => fact.knowledgeState === "CONFLICT")
+      .map((fact) => fact.field);
     return {
       doctor: {
         id: doctor.id,
@@ -232,8 +243,11 @@ export class DoctorDashboardService implements DoctorDashboardOperations {
         ...(visit.completedAt && {
           completedAt: visit.completedAt.toISOString(),
         }),
-        ...(visit.clinicalHistory?.chiefComplaint && {
-          chiefComplaint: visit.clinicalHistory.chiefComplaint,
+        ...((visit.clinicalHistory?.chiefComplaint ||
+          liveFacts.find((fact) => fact.field === "chiefComplaint")?.value) && {
+          chiefComplaint:
+            visit.clinicalHistory?.chiefComplaint ??
+            liveFacts.find((fact) => fact.field === "chiefComplaint")!.value!,
         }),
       },
       ...(clinicalBrief && { clinicalBrief }),
@@ -260,16 +274,57 @@ export class DoctorDashboardService implements DoctorDashboardOperations {
       ),
       verificationHistory,
       notes: notes.map((note) => noteDto(note, doctor)),
+      ...(liveIntake && {
+        liveIntake: {
+          patientSessionId: liveIntake.id,
+          language: liveIntake.language,
+          status: liveIntake.status,
+          facts: liveFacts.map((fact) => ({
+            id: fact.id,
+            field: fact.field,
+            ...(fact.value !== null && { value: fact.value }),
+            knowledgeState: fact.knowledgeState as
+              "KNOWN" | "UNKNOWN" | "CONFLICT" | "MISSING",
+            ...(fact.confidence !== null && { confidence: fact.confidence }),
+            verificationStatus: fact.verificationStatus as import("@helios/shared").ClinicalVerificationStatus,
+            verificationVersion: fact.verificationVersion,
+            source: "PATIENT_REPORTED" as const,
+            evidenceTurnIds: stringArray(fact.evidenceTurnIds),
+            model: fact.model,
+            ...(fact.modelVersion !== null && {
+              modelVersion: fact.modelVersion,
+            }),
+            conversationPolicyVersion: fact.conversationPolicyVersion,
+            updatedAt: fact.updatedAt.toISOString(),
+          })),
+        },
+      }),
+      ...(typeof routing.primarySpecialization === "string" && {
+        routing: {
+          specialization: routing.primarySpecialization,
+          reason:
+            typeof routing.reason === "string"
+              ? routing.reason
+              : "Clinician review required",
+          emergency: routing.emergencyEscalation === true,
+        },
+      }),
       aiInsights: {
         label: "AI-STRUCTURED",
         requiresVerification: true,
-        missingInformation: strings(interviewState.unknownFields),
-        contradictions: strings(interviewState.conflicts),
-        pendingVerificationCount: unresolved,
+        missingInformation: unique([
+          ...strings(interviewState.unknownFields),
+          ...liveMissing,
+        ]),
+        contradictions: unique([
+          ...strings(interviewState.conflicts),
+          ...liveConflicts,
+        ]),
+        pendingVerificationCount: unresolved + liveFacts.filter((fact) => pendingStatus(fact.verificationStatus)).length,
         structuredFactCount:
-          visit.interview?.responses.filter(
+          (visit.interview?.responses.filter(
             (response) => response.normalizedAnswer !== null,
-          ).length ?? 0,
+          ).length ?? 0) + liveFacts.length,
       },
       capabilities: {
         safetyEngineAvailable: false,
@@ -414,7 +469,13 @@ export class DoctorDashboardService implements DoctorDashboardOperations {
 }
 
 function queueItem(row: DoctorQueueVisit): DoctorQueueItemDto {
-  const pendingVerificationCount = pendingCount(row);
+  const pendingVerificationCount =
+    pendingCount(row) + (row.session?.heliosIntakeFacts.filter((fact) => pendingStatus(fact.verificationStatus)).length ?? 0);
+  const chiefComplaint =
+    row.clinicalHistory?.chiefComplaint ??
+    row.session?.heliosIntakeFacts.find(
+      (fact) => fact.field === "chiefComplaint",
+    )?.value;
   const openDocumentCount = row.documents.filter(
     (document) => document.processingStatus !== "VERIFIED",
   ).length;
@@ -445,8 +506,8 @@ function queueItem(row: DoctorQueueVisit): DoctorQueueItemDto {
     appointmentLabel:
       row.visitType === "FOLLOW_UP" ? "Follow-up" : "Pre-consultation",
     ...(row.tokenNumber && { tokenNumber: row.tokenNumber }),
-    ...(row.clinicalHistory?.chiefComplaint && {
-      chiefComplaint: row.clinicalHistory.chiefComplaint,
+    ...(chiefComplaint && {
+      chiefComplaint,
     }),
     status,
     visitStatus: row.status,
@@ -476,15 +537,6 @@ function pendingCount(
     | "ayushRecords"
   >,
 ) {
-  const pending = new Set([
-    "PENDING",
-    "MISSED",
-    "UNREVIEWED",
-    "PATIENT_REPORTED",
-    "AI_STRUCTURED",
-    "DOCUMENT_EXTRACTED",
-    "NEEDS_REVIEW",
-  ]);
   return [
     row.clinicalHistory,
     ...row.symptoms,
@@ -495,7 +547,20 @@ function pendingCount(
     ...row.ayushRecords,
   ]
     .filter(Boolean)
-    .filter((fact) => pending.has(fact!.verificationStatus)).length;
+    .filter((fact) => pendingStatus(fact!.verificationStatus)).length;
+}
+
+const pendingStatuses = new Set([
+    "PENDING",
+    "MISSED",
+    "UNREVIEWED",
+    "PATIENT_REPORTED",
+    "AI_STRUCTURED",
+    "DOCUMENT_EXTRACTED",
+    "NEEDS_REVIEW",
+]);
+function pendingStatus(status?: string) {
+  return pendingStatuses.has(status ?? "PATIENT_REPORTED");
 }
 
 function notifications(queue: DoctorQueueItemDto[]) {
@@ -597,6 +662,12 @@ function strings(value: unknown) {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : [];
+}
+function stringArray(value: unknown) {
+  return strings(value);
+}
+function unique(values: string[]) {
+  return [...new Set(values)];
 }
 async function optional<T>(work: () => Promise<T>): Promise<T | undefined> {
   try {

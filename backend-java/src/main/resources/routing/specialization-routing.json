@@ -1,0 +1,1951 @@
+{
+  "version": "routing-2026-09-v1",
+  "reviewStatus": "CLINICIAN_REVIEW_REQUIRED",
+  "specializations": [
+    {
+      "id": "unclassified",
+      "displayName": "Specialty unverified",
+      "aliases": [],
+      "providerType": "unknown",
+      "description": "Provider qualifications have not been configured.",
+      "source": "https://www.certificationmatters.org/board/internal-medicine/"
+    },
+    {
+      "id": "internal-medicine",
+      "displayName": "General Medicine / Internal Medicine",
+      "aliases": [
+        "general medicine",
+        "internal medicine",
+        "internist"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: General Medicine / Internal Medicine. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/internal-medicine/"
+    },
+    {
+      "id": "family-medicine",
+      "displayName": "Family Medicine / General Physician",
+      "aliases": [
+        "family doctor",
+        "general physician",
+        "gp"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Family Medicine / General Physician. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/family-medicine/"
+    },
+    {
+      "id": "emergency-medicine",
+      "displayName": "Emergency Medicine",
+      "aliases": [
+        "emergency",
+        "emergency doctor"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Emergency Medicine. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/emergency-medicine/"
+    },
+    {
+      "id": "trauma",
+      "displayName": "Trauma",
+      "aliases": [
+        "trauma surgery"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Trauma. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/surgery/"
+    },
+    {
+      "id": "cardiology",
+      "displayName": "Cardiology",
+      "aliases": [
+        "cardiologist",
+        "heart doctor"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Cardiology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/internal-medicine/"
+    },
+    {
+      "id": "neurology",
+      "displayName": "Neurology",
+      "aliases": [
+        "neurologist",
+        "nerve doctor"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Neurology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/psychiatry-neurology/"
+    },
+    {
+      "id": "neurosurgery",
+      "displayName": "Neurosurgery",
+      "aliases": [
+        "neurological surgery"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Neurosurgery. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/neurological-surgery/"
+    },
+    {
+      "id": "orthopaedics",
+      "displayName": "Orthopaedics",
+      "aliases": [
+        "orthopedics",
+        "orthopedic",
+        "orthopaedic",
+        "bone doctor"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Orthopaedics. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/orthopaedic-surgery/"
+    },
+    {
+      "id": "rheumatology",
+      "displayName": "Rheumatology",
+      "aliases": [
+        "rheumatologist"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Rheumatology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/internal-medicine/"
+    },
+    {
+      "id": "dermatology",
+      "displayName": "Dermatology",
+      "aliases": [
+        "dermatologist",
+        "skin doctor"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Dermatology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/dermatology/"
+    },
+    {
+      "id": "ophthalmology",
+      "displayName": "Ophthalmology",
+      "aliases": [
+        "ophthalmologist",
+        "eye doctor"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Ophthalmology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/ophthalmology/"
+    },
+    {
+      "id": "ent",
+      "displayName": "ENT / Otorhinolaryngology",
+      "aliases": [
+        "ent",
+        "otolaryngology",
+        "ear nose throat"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: ENT / Otorhinolaryngology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/otolaryngology-head-neck-surgery/"
+    },
+    {
+      "id": "pulmonology",
+      "displayName": "Pulmonology",
+      "aliases": [
+        "pulmonary medicine",
+        "lung doctor"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Pulmonology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/internal-medicine/"
+    },
+    {
+      "id": "gastroenterology",
+      "displayName": "Gastroenterology",
+      "aliases": [
+        "gastroenterologist",
+        "digestive specialist"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Gastroenterology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/internal-medicine/"
+    },
+    {
+      "id": "hepatology",
+      "displayName": "Hepatology",
+      "aliases": [
+        "liver specialist"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Hepatology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/internal-medicine/"
+    },
+    {
+      "id": "nephrology",
+      "displayName": "Nephrology",
+      "aliases": [
+        "renal medicine",
+        "kidney physician"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Nephrology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/internal-medicine/"
+    },
+    {
+      "id": "urology",
+      "displayName": "Urology",
+      "aliases": [
+        "urologist"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Urology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/urology/"
+    },
+    {
+      "id": "endocrinology",
+      "displayName": "Endocrinology / Diabetes",
+      "aliases": [
+        "endocrinologist",
+        "diabetology",
+        "diabetologist",
+        "hormone doctor"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Endocrinology / Diabetes. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/internal-medicine/"
+    },
+    {
+      "id": "hematology",
+      "displayName": "Hematology",
+      "aliases": [
+        "haematology",
+        "blood specialist"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Hematology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/internal-medicine/"
+    },
+    {
+      "id": "oncology",
+      "displayName": "Oncology",
+      "aliases": [
+        "oncologist",
+        "cancer specialist"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Oncology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/internal-medicine/"
+    },
+    {
+      "id": "general-surgery",
+      "displayName": "General Surgery",
+      "aliases": [
+        "general surgeon"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: General Surgery. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/surgery/"
+    },
+    {
+      "id": "cardiothoracic-surgery",
+      "displayName": "Cardiothoracic Surgery",
+      "aliases": [
+        "thoracic surgery"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Cardiothoracic Surgery. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/thoracic-surgery/"
+    },
+    {
+      "id": "vascular-surgery",
+      "displayName": "Vascular Surgery",
+      "aliases": [
+        "vascular surgeon"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Vascular Surgery. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/surgery/"
+    },
+    {
+      "id": "pediatrics",
+      "displayName": "Pediatrics",
+      "aliases": [
+        "paediatrics",
+        "pediatrician",
+        "child doctor"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Pediatrics. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/pediatrics/"
+    },
+    {
+      "id": "pediatric-surgery",
+      "displayName": "Pediatric Surgery",
+      "aliases": [
+        "paediatric surgery"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Pediatric Surgery. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/surgery/"
+    },
+    {
+      "id": "obstetrics-gynecology",
+      "displayName": "Obstetrics & Gynecology",
+      "aliases": [
+        "gynaecology",
+        "gynecology",
+        "obstetrics",
+        "pregnancy doctor"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Obstetrics & Gynecology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/obstetrics-gynecology/"
+    },
+    {
+      "id": "psychiatry",
+      "displayName": "Psychiatry",
+      "aliases": [
+        "psychiatrist"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Psychiatry. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/psychiatry-neurology/"
+    },
+    {
+      "id": "psychology",
+      "displayName": "Psychology / Mental Health",
+      "aliases": [
+        "psychologist",
+        "counselling"
+      ],
+      "providerType": "allied",
+      "description": "Routing category: Psychology / Mental Health. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/psychiatry-neurology/"
+    },
+    {
+      "id": "dentistry",
+      "displayName": "Dentistry",
+      "aliases": [
+        "dentist",
+        "tooth doctor"
+      ],
+      "providerType": "dental",
+      "description": "Routing category: Dentistry. Availability and credentials require local verification.",
+      "source": "https://www.ada.org/resources/careers/dental-specialties"
+    },
+    {
+      "id": "oral-maxillofacial",
+      "displayName": "Oral & Maxillofacial Surgery",
+      "aliases": [
+        "oral surgeon",
+        "maxillofacial surgeon"
+      ],
+      "providerType": "dental",
+      "description": "Routing category: Oral & Maxillofacial Surgery. Availability and credentials require local verification.",
+      "source": "https://www.ada.org/resources/careers/dental-specialties"
+    },
+    {
+      "id": "infectious-disease",
+      "displayName": "Infectious Disease",
+      "aliases": [
+        "infectious diseases"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Infectious Disease. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/internal-medicine/"
+    },
+    {
+      "id": "allergy-immunology",
+      "displayName": "Allergy & Immunology",
+      "aliases": [
+        "allergist",
+        "immunologist"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Allergy & Immunology. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/allergy-immunology/"
+    },
+    {
+      "id": "rehabilitation",
+      "displayName": "Physical Medicine / Rehabilitation",
+      "aliases": [
+        "physiatry",
+        "rehabilitation medicine"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Physical Medicine / Rehabilitation. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/physical-medicine-rehabilitation/"
+    },
+    {
+      "id": "pain-medicine",
+      "displayName": "Pain Medicine",
+      "aliases": [
+        "pain specialist"
+      ],
+      "providerType": "physician",
+      "description": "Routing category: Pain Medicine. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/psychiatry-neurology/"
+    },
+    {
+      "id": "physiotherapy",
+      "displayName": "Physiotherapy",
+      "aliases": [
+        "physical therapy",
+        "physiotherapist"
+      ],
+      "providerType": "allied",
+      "description": "Routing category: Physiotherapy. Availability and credentials require local verification.",
+      "source": "https://www.certificationmatters.org/board/physical-medicine-rehabilitation/"
+    }
+  ],
+  "mappings": [
+    {
+      "id": "cardiovascular",
+      "conditionName": "Cardiovascular concern",
+      "aliases": [
+        "heart disease",
+        "arrhythmia",
+        "atrial fibrillation",
+        "palpitations",
+        "heart doctor",
+        "cardiologist"
+      ],
+      "category": "Cardiology",
+      "bodySystem": "Cardiology",
+      "symptomKeywords": [
+        "chest pressure",
+        "chest pain",
+        "heart beating very fast",
+        "recurrent",
+        "exertion",
+        "persistent"
+      ],
+      "injuryKeywords": [],
+      "primarySpecialization": "cardiology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Cardiology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [
+        [
+          "chest pressure",
+          "chest pain",
+          "heart beating very fast"
+        ],
+        [
+          "recurrent",
+          "exertion",
+          "persistent"
+        ]
+      ],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "hypertension",
+      "conditionName": "Known hypertension specialist review",
+      "aliases": [
+        "hypertension specialist",
+        "uncontrolled hypertension",
+        "resistant hypertension"
+      ],
+      "category": "Cardiology",
+      "bodySystem": "Cardiology",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "cardiology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Cardiology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "blood-pressure",
+      "conditionName": "Blood pressure concern",
+      "aliases": [
+        "high blood pressure",
+        "hypertension"
+      ],
+      "category": "General Medicine / Internal Medicine",
+      "bodySystem": "General Medicine / Internal Medicine",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "internal-medicine",
+      "secondarySpecializations": [
+        "cardiology"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for General Medicine / Internal Medicine; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "migraine",
+      "conditionName": "Reported migraine or recurrent headache pattern",
+      "aliases": [
+        "migraine",
+        "migraine headache"
+      ],
+      "category": "Neurology",
+      "bodySystem": "Neurology",
+      "symptomKeywords": [
+        "headache",
+        "aura",
+        "light sensitivity",
+        "recurrent",
+        "persistent"
+      ],
+      "injuryKeywords": [],
+      "primarySpecialization": "neurology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Neurology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/psychiatry-neurology/"
+      ],
+      "active": true,
+      "requiredGroups": [
+        [
+          "headache"
+        ],
+        [
+          "aura",
+          "light sensitivity",
+          "recurrent",
+          "persistent"
+        ]
+      ],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "epilepsy",
+      "conditionName": "Known epilepsy follow-up",
+      "aliases": [
+        "epilepsy",
+        "seizure disorder",
+        "parkinsons disease",
+        "multiple sclerosis"
+      ],
+      "category": "Neurology",
+      "bodySystem": "Neurology",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "neurology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Neurology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/psychiatry-neurology/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "neurological",
+      "conditionName": "Neurological concern",
+      "aliases": [
+        "nerve problem",
+        "neurological problem"
+      ],
+      "category": "Neurology",
+      "bodySystem": "Neurology",
+      "symptomKeywords": [
+        "numbness",
+        "tingling",
+        "tremor",
+        "recurrent",
+        "persistent",
+        "hand",
+        "foot"
+      ],
+      "injuryKeywords": [],
+      "primarySpecialization": "neurology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Neurology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/psychiatry-neurology/"
+      ],
+      "active": true,
+      "requiredGroups": [
+        [
+          "numbness",
+          "tingling",
+          "tremor"
+        ],
+        [
+          "recurrent",
+          "persistent",
+          "hand",
+          "foot"
+        ]
+      ],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "fracture",
+      "conditionName": "Reported fracture or joint injury",
+      "aliases": [
+        "fracture",
+        "fractured",
+        "broken bone",
+        "arm broke",
+        "bone doctor",
+        "ligament injury",
+        "sprained ankle"
+      ],
+      "category": "Orthopaedics",
+      "bodySystem": "Orthopaedics",
+      "symptomKeywords": [
+        "knee",
+        "wrist",
+        "arm",
+        "ankle",
+        "joint",
+        "shoulder",
+        "fall",
+        "injury",
+        "trauma",
+        "twisted"
+      ],
+      "injuryKeywords": [
+        "knee",
+        "wrist",
+        "arm",
+        "ankle",
+        "joint",
+        "shoulder",
+        "fall",
+        "injury",
+        "trauma",
+        "twisted"
+      ],
+      "primarySpecialization": "orthopaedics",
+      "secondarySpecializations": [
+        "emergency-medicine"
+      ],
+      "urgencyDefault": "urgent",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Orthopaedics; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/orthopaedic-surgery/"
+      ],
+      "active": true,
+      "requiredGroups": [
+        [
+          "knee",
+          "wrist",
+          "arm",
+          "ankle",
+          "joint",
+          "shoulder"
+        ],
+        [
+          "fall",
+          "injury",
+          "trauma",
+          "twisted"
+        ]
+      ],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "joint-inflammation",
+      "conditionName": "Known inflammatory joint condition",
+      "aliases": [
+        "rheumatoid arthritis",
+        "lupus",
+        "inflammatory arthritis"
+      ],
+      "category": "Rheumatology",
+      "bodySystem": "Rheumatology",
+      "symptomKeywords": [
+        "joint",
+        "stiffness",
+        "morning stiffness"
+      ],
+      "injuryKeywords": [],
+      "primarySpecialization": "rheumatology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Rheumatology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [
+        [
+          "joint"
+        ],
+        [
+          "stiffness",
+          "morning stiffness"
+        ]
+      ],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "skin",
+      "conditionName": "Skin concern",
+      "aliases": [
+        "eczema",
+        "psoriasis",
+        "acne",
+        "skin rash",
+        "skin itching",
+        "skin doctor",
+        "red spots",
+        "rashes everywhere"
+      ],
+      "category": "Dermatology",
+      "bodySystem": "Dermatology",
+      "symptomKeywords": [
+        "rash",
+        "rashes",
+        "skin",
+        "red spots",
+        "itchy",
+        "itching",
+        "red",
+        "persistent"
+      ],
+      "injuryKeywords": [],
+      "primarySpecialization": "dermatology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Dermatology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/dermatology/"
+      ],
+      "active": true,
+      "requiredGroups": [
+        [
+          "rash",
+          "rashes",
+          "skin",
+          "red spots"
+        ],
+        [
+          "itchy",
+          "itching",
+          "red",
+          "persistent"
+        ]
+      ],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "ear",
+      "conditionName": "Ear/hearing concern",
+      "aliases": [
+        "ear infection",
+        "ear disorder",
+        "hearing loss",
+        "sinusitis",
+        "sinus infection"
+      ],
+      "category": "ENT / Otorhinolaryngology",
+      "bodySystem": "ENT / Otorhinolaryngology",
+      "symptomKeywords": [
+        "ear",
+        "hearing",
+        "sinus",
+        "throat",
+        "pain",
+        "problem",
+        "infection",
+        "persistent"
+      ],
+      "injuryKeywords": [],
+      "primarySpecialization": "ent",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for ENT / Otorhinolaryngology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/otolaryngology-head-neck-surgery/"
+      ],
+      "active": true,
+      "requiredGroups": [
+        [
+          "ear",
+          "hearing",
+          "sinus",
+          "throat"
+        ],
+        [
+          "pain",
+          "problem",
+          "infection",
+          "persistent"
+        ]
+      ],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "eye",
+      "conditionName": "Eye/vision concern",
+      "aliases": [
+        "eye problem",
+        "eye irritation",
+        "cataract",
+        "glaucoma"
+      ],
+      "category": "Ophthalmology",
+      "bodySystem": "Ophthalmology",
+      "symptomKeywords": [
+        "eye",
+        "vision",
+        "blurred",
+        "irritation",
+        "problem"
+      ],
+      "injuryKeywords": [],
+      "primarySpecialization": "ophthalmology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "urgent",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Ophthalmology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/ophthalmology/"
+      ],
+      "active": true,
+      "requiredGroups": [
+        [
+          "eye",
+          "vision"
+        ],
+        [
+          "blurred",
+          "irritation",
+          "problem"
+        ]
+      ],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "lung",
+      "conditionName": "Chronic respiratory specialist care",
+      "aliases": [
+        "asthma",
+        "copd",
+        "chronic obstructive pulmonary disease",
+        "lung disease"
+      ],
+      "category": "Pulmonology",
+      "bodySystem": "Pulmonology",
+      "symptomKeywords": [
+        "cough",
+        "wheezing",
+        "persistent",
+        "chronic",
+        "recurrent"
+      ],
+      "injuryKeywords": [],
+      "primarySpecialization": "pulmonology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Pulmonology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [
+        [
+          "cough",
+          "wheezing"
+        ],
+        [
+          "persistent",
+          "chronic",
+          "recurrent"
+        ]
+      ],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "digestive",
+      "conditionName": "Persistent digestive concern",
+      "aliases": [
+        "inflammatory bowel disease",
+        "crohns disease",
+        "ulcerative colitis",
+        "digestive disorder"
+      ],
+      "category": "Gastroenterology",
+      "bodySystem": "Gastroenterology",
+      "symptomKeywords": [
+        "abdominal pain",
+        "diarrhea",
+        "stomach pain",
+        "persistent",
+        "recurrent",
+        "chronic"
+      ],
+      "injuryKeywords": [],
+      "primarySpecialization": "gastroenterology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Gastroenterology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [
+        [
+          "abdominal pain",
+          "diarrhea",
+          "stomach pain"
+        ],
+        [
+          "persistent",
+          "recurrent",
+          "chronic"
+        ]
+      ],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "reflux",
+      "conditionName": "Meal-associated burning discomfort",
+      "aliases": [
+        "heartburn",
+        "acid reflux"
+      ],
+      "category": "General Medicine / Internal Medicine",
+      "bodySystem": "General Medicine / Internal Medicine",
+      "symptomKeywords": [
+        "burning chest pain",
+        "burning chest",
+        "after meals",
+        "after eating"
+      ],
+      "injuryKeywords": [],
+      "primarySpecialization": "internal-medicine",
+      "secondarySpecializations": [
+        "gastroenterology"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for General Medicine / Internal Medicine; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [
+        [
+          "burning chest pain",
+          "burning chest"
+        ],
+        [
+          "after meals",
+          "after eating"
+        ]
+      ],
+      "minSignals": 2,
+      "priority": 3
+    },
+    {
+      "id": "liver",
+      "conditionName": "Known liver disease specialist review",
+      "aliases": [
+        "cirrhosis",
+        "chronic liver disease",
+        "liver disease"
+      ],
+      "category": "Hepatology",
+      "bodySystem": "Hepatology",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "hepatology",
+      "secondarySpecializations": [
+        "gastroenterology",
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Hepatology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "kidney",
+      "conditionName": "Known kidney dysfunction",
+      "aliases": [
+        "chronic kidney disease",
+        "kidney disease",
+        "renal dysfunction",
+        "renal failure",
+        "diabetic nephropathy"
+      ],
+      "category": "Nephrology",
+      "bodySystem": "Nephrology",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "nephrology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Nephrology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 5
+    },
+    {
+      "id": "stones",
+      "conditionName": "Reported urinary stones",
+      "aliases": [
+        "kidney stone",
+        "renal stone",
+        "ureteric stone",
+        "urinary stone",
+        "prostate problem"
+      ],
+      "category": "Urology",
+      "bodySystem": "Urology",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "urology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Urology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/urology/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 4
+    },
+    {
+      "id": "urinary",
+      "conditionName": "Recurrent urinary concern",
+      "aliases": [
+        "urinary tract structural problem"
+      ],
+      "category": "Urology",
+      "bodySystem": "Urology",
+      "symptomKeywords": [
+        "urinary",
+        "urination",
+        "recurrent",
+        "persistent",
+        "discomfort"
+      ],
+      "injuryKeywords": [],
+      "primarySpecialization": "urology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Urology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/urology/"
+      ],
+      "active": true,
+      "requiredGroups": [
+        [
+          "urinary",
+          "urination"
+        ],
+        [
+          "recurrent",
+          "persistent",
+          "discomfort"
+        ]
+      ],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "thyroid",
+      "conditionName": "Endocrine/thyroid concern",
+      "aliases": [
+        "thyroid problem",
+        "thyroid disease",
+        "hypothyroidism",
+        "hyperthyroidism",
+        "hormonal disorder",
+        "complex diabetes",
+        "diabetes"
+      ],
+      "category": "Endocrinology / Diabetes",
+      "bodySystem": "Endocrinology / Diabetes",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "endocrinology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Endocrinology / Diabetes; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "blood",
+      "conditionName": "Known blood disorder",
+      "aliases": [
+        "sickle cell disease",
+        "haemophilia",
+        "hemophilia",
+        "blood disorder"
+      ],
+      "category": "Hematology",
+      "bodySystem": "Hematology",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "hematology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Hematology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "cancer",
+      "conditionName": "Reported known or clinician-suspected cancer",
+      "aliases": [
+        "known cancer",
+        "diagnosed cancer",
+        "suspected cancer",
+        "cancer referral",
+        "chemotherapy follow up"
+      ],
+      "category": "Oncology",
+      "bodySystem": "Oncology",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "oncology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Oncology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 3
+    },
+    {
+      "id": "surgery",
+      "conditionName": "Known surgical referral",
+      "aliases": [
+        "hernia",
+        "gallstones",
+        "general surgery referral"
+      ],
+      "category": "General Surgery",
+      "bodySystem": "General Surgery",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "general-surgery",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for General Surgery; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/surgery/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "heart-surgery",
+      "conditionName": "Existing cardiac/thoracic surgical referral",
+      "aliases": [
+        "cardiac surgery referral",
+        "thoracic surgery referral",
+        "heart bypass follow up"
+      ],
+      "category": "Cardiothoracic Surgery",
+      "bodySystem": "Cardiothoracic Surgery",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "cardiothoracic-surgery",
+      "secondarySpecializations": [
+        "cardiology"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Cardiothoracic Surgery; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/thoracic-surgery/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "vascular",
+      "conditionName": "Known vascular surgical referral",
+      "aliases": [
+        "vascular surgery referral",
+        "peripheral arterial disease"
+      ],
+      "category": "Vascular Surgery",
+      "bodySystem": "Vascular Surgery",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "vascular-surgery",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Vascular Surgery; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/surgery/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "child-surgery",
+      "conditionName": "Pediatric surgical referral",
+      "aliases": [
+        "pediatric surgery referral",
+        "paediatric surgery referral"
+      ],
+      "category": "Pediatric Surgery",
+      "bodySystem": "Pediatric Surgery",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "pediatric-surgery",
+      "secondarySpecializations": [
+        "pediatrics"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "child",
+      "genderContext": null,
+      "description": "Concern pattern for Pediatric Surgery; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/surgery/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "pregnancy",
+      "conditionName": "Pregnancy/reproductive concern",
+      "aliases": [
+        "pregnant",
+        "pregnancy",
+        "antenatal",
+        "prenatal",
+        "menstrual problem",
+        "pelvic pain",
+        "reproductive health"
+      ],
+      "category": "Obstetrics & Gynecology",
+      "bodySystem": "Obstetrics & Gynecology",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "obstetrics-gynecology",
+      "secondarySpecializations": [
+        "family-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Obstetrics & Gynecology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/obstetrics-gynecology/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "mental-health",
+      "conditionName": "Mental health concern",
+      "aliases": [
+        "depression",
+        "bipolar disorder",
+        "schizophrenia",
+        "panic attacks",
+        "mental health concern"
+      ],
+      "category": "Psychiatry",
+      "bodySystem": "Psychiatry",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "psychiatry",
+      "secondarySpecializations": [
+        "psychology",
+        "family-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Psychiatry; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/psychiatry-neurology/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "dental",
+      "conditionName": "Dental concern",
+      "aliases": [
+        "toothache",
+        "tooth pain",
+        "gum pain",
+        "dental problem",
+        "gum bleeding"
+      ],
+      "category": "Dentistry",
+      "bodySystem": "Dentistry",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "dentistry",
+      "secondarySpecializations": [
+        "oral-maxillofacial"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Dentistry; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.ada.org/resources/careers/dental-specialties"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "jaw",
+      "conditionName": "Reported jaw injury or oral surgical referral",
+      "aliases": [
+        "jaw fracture",
+        "oral surgery referral",
+        "maxillofacial referral"
+      ],
+      "category": "Oral & Maxillofacial Surgery",
+      "bodySystem": "Oral & Maxillofacial Surgery",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "oral-maxillofacial",
+      "secondarySpecializations": [
+        "emergency-medicine",
+        "dentistry"
+      ],
+      "urgencyDefault": "urgent",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Oral & Maxillofacial Surgery; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.ada.org/resources/careers/dental-specialties"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "infection",
+      "conditionName": "Known infection specialist referral",
+      "aliases": [
+        "infectious disease referral",
+        "hiv specialist",
+        "complex infection",
+        "recurrent unexplained fever"
+      ],
+      "category": "Infectious Disease",
+      "bodySystem": "Infectious Disease",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "infectious-disease",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Infectious Disease; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "allergy",
+      "conditionName": "Non-emergency allergy specialist review",
+      "aliases": [
+        "allergy testing",
+        "recurrent allergies",
+        "allergic rhinitis"
+      ],
+      "category": "Allergy & Immunology",
+      "bodySystem": "Allergy & Immunology",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "allergy-immunology",
+      "secondarySpecializations": [
+        "internal-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Allergy & Immunology; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/allergy-immunology/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "rehab",
+      "conditionName": "Rehabilitation follow-up",
+      "aliases": [
+        "rehabilitation",
+        "post stroke rehabilitation",
+        "rehab referral"
+      ],
+      "category": "Physical Medicine / Rehabilitation",
+      "bodySystem": "Physical Medicine / Rehabilitation",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "rehabilitation",
+      "secondarySpecializations": [
+        "physiotherapy"
+      ],
+      "urgencyDefault": "routine",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Physical Medicine / Rehabilitation; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/physical-medicine-rehabilitation/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "pain-clinic",
+      "conditionName": "Chronic pain specialist referral",
+      "aliases": [
+        "chronic pain referral",
+        "pain clinic referral"
+      ],
+      "category": "Pain Medicine",
+      "bodySystem": "Pain Medicine",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "pain-medicine",
+      "secondarySpecializations": [
+        "rehabilitation",
+        "internal-medicine"
+      ],
+      "urgencyDefault": "routine",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for Pain Medicine; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/psychiatry-neurology/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    },
+    {
+      "id": "general",
+      "conditionName": "General/systemic concern",
+      "aliases": [
+        "fever",
+        "weak",
+        "unwell",
+        "fatigue"
+      ],
+      "category": "General Medicine / Internal Medicine",
+      "bodySystem": "General Medicine / Internal Medicine",
+      "symptomKeywords": [],
+      "injuryKeywords": [],
+      "primarySpecialization": "internal-medicine",
+      "secondarySpecializations": [
+        "family-medicine"
+      ],
+      "urgencyDefault": "soon",
+      "ageGroup": "all",
+      "genderContext": null,
+      "description": "Concern pattern for General Medicine / Internal Medicine; not a diagnosis.",
+      "routingNotes": "Clinician assessment determines final referral and urgency. Matching is not diagnostic confirmation.",
+      "emergencyRedFlags": [
+        "See versioned emergency rules; emergency escalation takes precedence."
+      ],
+      "sourceOrReference": [
+        "https://www.certificationmatters.org/board/internal-medicine/"
+      ],
+      "active": true,
+      "requiredGroups": [],
+      "minSignals": 2,
+      "priority": 0
+    }
+  ],
+  "emergencyRules": [
+    {
+      "id": "chest-severe",
+      "groups": [
+        [
+          "chest pain",
+          "chest pressure",
+          "chest discomfort",
+          "सीने में दर्द"
+        ],
+        [
+          "severe",
+          "crushing",
+          "squeezing",
+          "sudden",
+          "persistent",
+          "does not go away",
+          "तेज"
+        ]
+      ],
+      "reason": "Chest discomfort with a reported high-risk feature.",
+      "source": "https://www.nhs.uk/symptoms/chest-pain/"
+    },
+    {
+      "id": "chest-associated",
+      "groups": [
+        [
+          "chest pain",
+          "chest pressure",
+          "chest discomfort",
+          "सीने में दर्द"
+        ],
+        [
+          "sweating",
+          "sweaty",
+          "difficulty breathing",
+          "short of breath",
+          "faint",
+          "arm pain",
+          "jaw pain",
+          "सांस लेने में कठिनाई"
+        ]
+      ],
+      "reason": "Chest discomfort with associated warning symptoms.",
+      "source": "https://www.nhs.uk/symptoms/chest-pain/"
+    },
+    {
+      "id": "breathing",
+      "groups": [
+        [
+          "severe difficulty breathing",
+          "major difficulty breathing",
+          "struggling to breathe",
+          "gasping",
+          "cannot breathe",
+          "cant breathe",
+          "unable to breathe",
+          "सांस नहीं आ रही"
+        ]
+      ],
+      "reason": "Severe breathing difficulty reported.",
+      "source": "https://www.nhs.uk/symptoms/shortness-of-breath/"
+    },
+    {
+      "id": "consciousness",
+      "groups": [
+        [
+          "unconscious",
+          "loss of consciousness",
+          "cannot wake",
+          "unresponsive",
+          "बेहोश"
+        ]
+      ],
+      "reason": "Loss of responsiveness reported.",
+      "source": "https://www.nhs.uk/conditions/anaphylaxis/"
+    },
+    {
+      "id": "stroke",
+      "groups": [
+        [
+          "face drooping",
+          "facial droop",
+          "slurred speech",
+          "sudden one sided weakness",
+          "sudden vision loss",
+          "sudden loss of vision",
+          "sudden arm weakness"
+        ]
+      ],
+      "reason": "A possible acute neurological warning sign was reported.",
+      "source": "https://www.nhs.uk/conditions/stroke/symptoms/"
+    },
+    {
+      "id": "bleeding",
+      "groups": [
+        [
+          "uncontrolled bleeding",
+          "major bleeding",
+          "bleeding wont stop",
+          "bleeding will not stop"
+        ]
+      ],
+      "reason": "Major or uncontrolled bleeding reported.",
+      "source": "https://www.sja.org.uk/first-aid-advice/"
+    },
+    {
+      "id": "trauma",
+      "groups": [
+        [
+          "severe trauma",
+          "major trauma",
+          "major burns",
+          "severe burns",
+          "crush injury"
+        ]
+      ],
+      "reason": "A major injury was reported.",
+      "source": "https://www.sja.org.uk/first-aid-advice/"
+    },
+    {
+      "id": "spinal-injury",
+      "groups": [
+        [
+          "spinal injury",
+          "back injury",
+          "neck injury"
+        ],
+        [
+          "weakness",
+          "numbness",
+          "paralysis",
+          "cannot move"
+        ]
+      ],
+      "reason": "Spinal injury with neurological features reported.",
+      "source": "https://www.sja.org.uk/first-aid-advice/"
+    },
+    {
+      "id": "seizure",
+      "groups": [
+        [
+          "seizure",
+          "seizures"
+        ],
+        [
+          "first seizure",
+          "five minutes",
+          "5 minutes",
+          "still seizing",
+          "repeated",
+          "not recovering"
+        ]
+      ],
+      "reason": "A seizure with emergency features was reported.",
+      "source": "https://www.nhs.uk/conditions/what-to-do-if-someone-has-a-seizure-fit/"
+    },
+    {
+      "id": "allergic",
+      "groups": [
+        [
+          "swollen tongue",
+          "tongue swelling",
+          "throat swelling",
+          "throat closing",
+          "anaphylaxis",
+          "severe allergic reaction"
+        ]
+      ],
+      "reason": "Severe allergic-reaction features reported.",
+      "source": "https://www.nhs.uk/conditions/anaphylaxis/"
+    },
+    {
+      "id": "self-harm",
+      "groups": [
+        [
+          "kill myself",
+          "suicide plan",
+          "suicidal",
+          "overdose",
+          "hurt myself now",
+          "cannot keep myself safe"
+        ]
+      ],
+      "reason": "Immediate self-harm or safety concern reported.",
+      "source": "https://www.nhs.uk/mental-health/feelings-symptoms-behaviours/behaviours/help-for-suicidal-thoughts/"
+    },
+    {
+      "id": "pregnancy-bleeding",
+      "groups": [
+        [
+          "pregnant",
+          "pregnancy"
+        ],
+        [
+          "heavy bleeding",
+          "severe abdominal pain"
+        ]
+      ],
+      "reason": "Pregnancy with a reported acute warning symptom.",
+      "source": "https://www.nhs.uk/pregnancy/related-conditions/common-symptoms/vaginal-bleeding/"
+    }
+  ]
+}

@@ -33,6 +33,23 @@ const fact = (overrides: Partial<SnapshotFact> = {}): SnapshotFact => ({
 });
 
 describe("Phase 8 deterministic comparison engine", () => {
+  it("retains the first source and flags large duplicate groups", () => {
+    const first = fact({ eventId: "first-source" });
+    const duplicates = Array.from({ length: 10000 }, (_, index) =>
+      fact({ eventId: `duplicate-${index}` }),
+    );
+    const [change] = engine.compare(
+      snapshot([first, ...duplicates]),
+      snapshot([fact({ eventId: "current-source" })]),
+    );
+    expect(change).toMatchObject({
+      changeType: "CONFLICTED",
+      reasonCode: "DUPLICATE_FACTS",
+      previous: { eventId: "first-source" },
+      current: { eventId: "current-source" },
+    });
+  });
+
   it("calculates the synthetic hemoglobin delta without clinical interpretation", () => {
     const [change] = engine.compare(
       snapshot([fact()]),

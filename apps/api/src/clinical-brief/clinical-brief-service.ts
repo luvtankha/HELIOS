@@ -156,9 +156,11 @@ export class ClinicalBriefService implements ClinicalBriefOperations {
         "BRIEF_VISIT_NOT_FOUND",
       );
     const latest = await this.repository.latest(patientId, selected);
-    return latest
-      ? this.detail(latest.id, token, requestId)
-      : this.generate(patientId, selected, token, requestId);
+    if (latest && latest.generatorVersion === CLINICAL_BRIEF_GENERATOR_VERSION) {
+      const detail = await this.detail(latest.id, token, requestId);
+      if (detail.status !== "STALE") return detail;
+    }
+    return this.generate(patientId, selected, token, requestId);
   }
 
   async detail(id: string, token?: string, requestId?: string) {
@@ -338,6 +340,17 @@ export class ClinicalBriefService implements ClinicalBriefOperations {
     );
     return {
       patient: row.patient,
+      liveFacts: (row.visit.session?.heliosIntakeFacts ?? []).map((fact) => ({
+        id: fact.id,
+        field: fact.field,
+        value: fact.value,
+        knowledgeState: fact.knowledgeState,
+        verificationStatus: fact.verificationStatus,
+        verificationVersion: fact.verificationVersion,
+        evidenceTurnIds: Array.isArray(fact.evidenceTurnIds)
+          ? fact.evidenceTurnIds.filter((id): id is string => typeof id === "string")
+          : [],
+      })),
       visit: {
         id: row.visit.id,
         startedAt: row.visit.startedAt,

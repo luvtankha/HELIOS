@@ -133,6 +133,26 @@ const input = (overrides: Partial<BriefInput> = {}): BriefInput => ({
 });
 
 describe("ClinicalBriefBuilder", () => {
+  it("builds an evidence-linked brief from native intake without legacy symptoms", () => {
+    const source = input({
+      visit: { id: "current", startedAt: new Date("2026-10-04T00:00:00Z") },
+      symptoms: [], medications: [], documents: [], observations: [], comparison: undefined,
+      liveFacts: [
+        { id: "chief", field: "chiefComplaint", value: "fatigue", knowledgeState: "KNOWN", evidenceTurnIds: ["turn-1"] },
+        { id: "severity", field: "severity", value: "3/10", knowledgeState: "KNOWN", evidenceTurnIds: ["turn-3"] },
+        { id: "allergy", field: "allergies", value: "none reported", knowledgeState: "KNOWN", evidenceTurnIds: ["turn-3"] },
+        { id: "history", field: "pastMedicalHistory", value: null, knowledgeState: "UNKNOWN", evidenceTurnIds: ["turn-3"] },
+      ],
+    });
+    const builder = new ClinicalBriefBuilder();
+    const brief = builder.build(source);
+    expect(brief.narrative).toContain("fatigue");
+    expect(brief.narrative).toContain("3/10");
+    expect(brief.claims.find((claim) => claim.claimKey === "live:history")?.sectionType).toBe("NEEDS_VERIFICATION");
+    expect(brief.claims.filter((claim) => claim.sectionType === "ALLERGIES")).toHaveLength(1);
+    expect(brief.sourceReferences.find((item) => item.sourceId === "chief")?.sourceText).toContain("turn-1");
+    expect(builder.revision(source)).not.toBe(builder.revision({ ...source, liveFacts: [] }));
+  });
   it("builds the doctor-first brief from existing structured sources", () => {
     const brief = new ClinicalBriefBuilder().build(input());
     expect(
@@ -307,6 +327,18 @@ describe("ClinicalBriefBuilder", () => {
     const builder = new ClinicalBriefBuilder();
     expect(builder.revision(input())).toBe(builder.revision(input()));
     expect(builder.build(input())).toEqual(builder.build(input()));
+  });
+
+  it("clears review markers for verified voice facts and excludes rejected facts from the brief", () => {
+    const value = input({ liveFacts: [
+      { id: "live", field: "severity", value: "4/10", knowledgeState: "KNOWN", verificationStatus: "DOCTOR_CORRECTED", verificationVersion: 1, evidenceTurnIds: ["turn-1"] },
+      { id: "rejected", field: "chiefComplaint", value: "Unsupported symptom", knowledgeState: "KNOWN", verificationStatus: "DOCTOR_REJECTED", evidenceTurnIds: ["turn-2"] },
+    ] });
+    const builder = new ClinicalBriefBuilder();
+    const brief = builder.build(value);
+    expect(brief.claims.find((claim) => claim.claimKey === "live:live")).toMatchObject({ needsVerification: false, verificationStatus: "DOCTOR_VERIFIED", sourceType: "PATIENT_REPORTED" });
+    expect(brief.claims.some((claim) => claim.claimKey === "live:rejected")).toBe(false);
+    expect(builder.revision(value)).not.toBe(builder.revision({ ...value, liveFacts: value.liveFacts!.map((fact) => ({ ...fact, verificationStatus: "PATIENT_REPORTED" })) }));
   });
 });
 

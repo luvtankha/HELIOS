@@ -85,6 +85,7 @@ function harness(repositoryOverrides: Record<string, unknown> = {}) {
     visit: vi.fn(async (patientId: string) =>
       patientId === "patient-1" ? null : null,
     ),
+    liveIntake: vi.fn(async () => null),
     notes: vi.fn(async () => []),
     createNote: vi.fn(),
     updateNote: vi.fn(async () => null),
@@ -182,6 +183,86 @@ describe("DoctorDashboardService", () => {
     await expect(
       service.workspace("another-patient", undefined, token),
     ).rejects.toMatchObject({ code: "PATIENT_NOT_FOUND" });
+  });
+
+  it("surfaces linked v2 live-intake facts only through the authorized workspace", async () => {
+    const visit = {
+      id: "visit-1",
+      patientId: "patient-1",
+      status: "READY_FOR_DOCTOR",
+      visitType: "PRE_CONSULTATION",
+      tokenNumber: "A-1",
+      startedAt: new Date("2026-10-04T01:00:00Z"),
+      completedAt: null,
+      clinicalHistory: null,
+      symptoms: [],
+      medications: [],
+      allergies: [],
+      observations: [],
+      documentFacts: [],
+      ayushRecords: [],
+      riskSignals: [],
+      interview: null,
+    };
+    const { service, repository } = harness({
+      visit: vi.fn(async () => visit),
+      liveIntake: vi.fn(async () => ({
+        id: "session-v2",
+        language: "hi-Hinglish",
+        status: "READY_FOR_REVIEW",
+        heliosIntakeFacts: [
+          {
+            id: "fact-1",
+            field: "chiefComplaint",
+            value: "chest pressure",
+            knowledgeState: "KNOWN",
+            confidence: "HIGH",
+            source: "PATIENT_REPORTED",
+            evidenceTurnIds: ["turn-1"],
+            model: "VoiceArena/Human-1",
+            modelVersion: null,
+            conversationPolicyVersion: "helios-v2-policy-1",
+            updatedAt: new Date("2026-10-04T01:01:00Z"),
+          },
+          {
+            id: "fact-2",
+            field: "onset",
+            value: null,
+            knowledgeState: "MISSING",
+            confidence: null,
+            source: "PATIENT_REPORTED",
+            evidenceTurnIds: ["turn-2"],
+            model: "VoiceArena/Human-1",
+            modelVersion: null,
+            conversationPolicyVersion: "helios-v2-policy-1",
+            updatedAt: new Date("2026-10-04T01:02:00Z"),
+          },
+        ],
+      })),
+    });
+
+    const workspace = await service.workspace(
+      "patient-1",
+      "visit-1",
+      token,
+      "request-1",
+    );
+
+    expect(repository.liveIntake).toHaveBeenCalledWith("patient-1", "visit-1");
+    expect(workspace.liveIntake).toMatchObject({
+      patientSessionId: "session-v2",
+      language: "hi-Hinglish",
+      facts: [
+        { field: "chiefComplaint", knowledgeState: "KNOWN" },
+        { field: "onset", knowledgeState: "MISSING" },
+      ],
+    });
+    expect(workspace.aiInsights).toMatchObject({
+      missingInformation: ["onset"],
+      contradictions: [],
+      pendingVerificationCount: 2,
+      structuredFactCount: 2,
+    });
   });
 
   it("denies an active doctor who is not assigned to the patient", async () => {

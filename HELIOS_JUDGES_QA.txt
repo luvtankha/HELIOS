@@ -1,0 +1,1080 @@
+HELIOS — HACKATHON JUDGE QUESTIONS AND ANSWERS
+Beginner edition: assume no prior knowledge of the project or its technology
+Based on the implementation and recorded checks available on 5 October 2026
+
+HOW TO USE THIS FILE
+===================
+
+Read the project story and glossary first. For each question:
+
+  SAY: A short answer you can speak to the judges.
+  UNDERSTAND: What that answer means in everyday language.
+  IF ASKED MORE: An honest follow-up answer or a limit to remember.
+
+You do not need to memorize every technology name. Understand the path from a
+patient's voice to the doctor's screen. Start with the short answer and explain
+more only when asked. Do not claim personal work, user interviews, partnerships,
+clinical trials, accuracy figures or cost savings that you cannot demonstrate.
+
+This file describes the CURRENT native voice implementation. Some older SIH
+notes in the repository describe a previous text/voice-adapter prototype.
+The authoritative latest test and presentation-readiness record is:
+  docs/final-engineering-review-2026-10-05.md
+Use that report if a number or outcome differs from an earlier health report.
+
+
+PART 1 — UNDERSTAND THE ENTIRE PROJECT IN FIVE MINUTES
+===================================================
+
+Imagine a fictional patient named Rahul who feels tired. He opens HELIOS, agrees
+to the voice interaction, and speaks in Hindi or Hinglish. HELIOS replies in
+Hindi and asks relevant questions: when it started, its severity, whether it is
+constant, and what other symptoms accompany it. The exact questions depend on
+the answers and the implemented rules.
+
+Behind the screen, five things are happening:
+
+1. The browser captures sound from the microphone.
+2. A Python service passes the sound to Gemini Live and returns spoken audio.
+3. Gemini proposes facts such as "chiefComplaint: fatigue" through a defined
+   function called record_turn.
+4. The Java service checks and saves those facts, selects the next question,
+   and eventually recommends a specialization and attempts doctor assignment.
+5. The doctor signs in and sees the stored facts and summary through the
+   Express service. Both backends use the same PostgreSQL database.
+
+An example record might be:
+
+  Main concern: fatigue
+  Onset: 2 days ago
+  Severity: 3/10
+  Pattern: intermittent
+  Associated symptoms: none reported
+
+Those are patient-reported statements, not a diagnosis. The system may recommend
+Internal Medicine as a starting department. A real clinician must interpret the
+information and decide what to do.
+
+The easiest explanation to remember:
+
+  "The patient speaks. HELIOS asks relevant questions, organizes the answers,
+  and prepares a handoff for a doctor. The doctor makes the clinical decision."
+
+The important ownership distinction:
+
+  Gemini supplies the underlying native speech intelligence.
+  HELIOS supplies the application, rules, records, access controls and handoff.
+
+
+PART 2 — SMALL GLOSSARY: WHAT THE TECHNICAL WORDS MEAN
+====================================================
+
+Frontend: What the user sees and interacts with in the browser.
+Backend: Programs behind the screen that enforce rules and handle data.
+Server: A running program that receives requests and sends responses.
+API: An agreed way for programs to request information or actions from each other.
+Database: Organized long-term storage, like related digital tables.
+Model: A trained AI system; Gemini Live is the model used for native voice.
+Native audio: The model accepts audio and generates audio directly.
+STT: Speech-to-text, turning sound into written words.
+TTS: Text-to-speech, producing sound from written words.
+WebSocket: An open connection through which both sides can keep sending data.
+PCM16: A simple digital audio format storing each sample as a 16-bit number.
+24 kHz: 24,000 audio samples per second; the browser's input format here.
+Tool/function call: A structured request from a model to an application function.
+JSON: A common text format for structured fields and values.
+Schema: The expected shape and allowed types of data.
+Validation: Checking that supplied data follows the expected rules.
+Heuristic: A practical rule or scoring method; it is not guaranteed truth.
+Routing: Choosing the suggested medical department or specialization.
+Provenance: Information about where a recorded statement came from.
+Confidence: A label or score for an output; here it is not a medical probability.
+Authentication: Checking who someone is.
+Authorization: Checking which actions and records that person may access.
+Hash: A one-way representation; password hashes are checked rather than decrypted.
+Salt: A random value mixed into password hashing so identical passwords do not
+      simply produce identical stored hashes.
+Token/ticket: A signed credential used to authorize a session or connection.
+Migration: A versioned change to database structure, such as adding a column.
+ORM: A library that helps application code work with database records.
+Cache: Reusing a previously computed result when its inputs are still valid.
+Latency: Time between an action and its response.
+Quota: A provider's allowed amount of usage over a period.
+Unit test: A check of a small piece of code in isolation.
+Integration test: A check of parts working together, such as code and a database.
+End-to-end test: A check of a complete workflow across several parts.
+Synthetic data: Invented test data rather than an actual patient's history.
+Cloud: Computing on an external provider's servers.
+Localhost: This computer; it is not an internet address for another device.
+MVP: Minimum viable product, the smallest useful version of an idea.
+EHR: Electronic health record, the broader record system used by a care provider.
+
+THE TECHNOLOGY NAMES, IN EVERYDAY LANGUAGE
+
+React: Builds reusable screen pieces, such as buttons, cards and panels.
+Next.js: Organizes the React website, its pages and how it is built/served.
+TypeScript: JavaScript with checks on expected data types, helping catch mistakes.
+Tailwind CSS: Small styling classes for layout, colors, spacing and responsive UI.
+Node.js: Runs JavaScript/TypeScript application code outside the browser.
+Express: Helps the Node backend define API requests and responses.
+Java: The programming language used for the current patient policy backend.
+Spring Boot: The Java framework that assembles that backend and its services.
+Python: The programming language used for the voice gateway.
+FastAPI: The Python framework exposing the gateway's web/API endpoints.
+Gemini Live: The external AI service supplying native speech capabilities.
+PostgreSQL: The actual database storing related patient, visit and doctor records.
+Prisma / JPA: Database-access tools used by the Node and Java code respectively.
+Flyway: Applies tracked database structure changes in order.
+pnpm: Installs the JavaScript project's dependencies and runs project commands.
+uv: Installs/manages the Python project's environment and dependencies.
+Git: Tracks source-code changes; it should not track the private API key.
+Docker Compose: Describes how multiple services can run in containers together.
+  Containers package applications with their runtime environment. This project's
+  container configuration has not been executed on the validated workstation.
+
+Read a command such as "pnpm dev" as: "ask the project's command runner to
+start the development setup." A terminal is the window where you type commands.
+The README explains which folder to use and which prerequisites must exist.
+
+
+PART 3 — PRODUCT AND NON-TECHNICAL QUESTIONS
+==========================================
+
+Q01. What is HELIOS? What does the name stand for?
+
+SAY: "HELIOS stands for Healthcare Enabled Language & Intelligent Observation
+System. It is a Hindi voice intake assistant that organizes a patient's symptom
+description and prepares it for a doctor."
+
+UNDERSTAND: Intake means collecting initial information before a consultation.
+The main output is useful clinical context and a referral suggestion.
+
+IF ASKED MORE: "It is a hackathon prototype. It does not replace the doctor or
+claim to diagnose the patient."
+
+Q02. What problem are you trying to solve?
+
+SAY: "Patients can find it difficult to describe symptoms in a form, and doctors
+need to assemble the basic history from several answers. We want to prepare
+that information through a natural conversation before the consultation."
+
+UNDERSTAND: The proposed improvement is easier communication and organized
+information. Do not turn a reasonable problem statement into an invented survey.
+
+IF ASKED MORE: "We still need a supervised pilot to measure how much time this
+saves and whether doctors find the resulting information useful."
+
+Q03. Who is the intended user?
+
+SAY: "There are two users: a Hindi/Hinglish-speaking patient describing a concern
+and an authorized clinician reviewing the resulting intake."
+
+UNDERSTAND: A patient-facing conversation and a doctor-facing workspace solve
+different parts of the same workflow.
+
+IF ASKED MORE: "A supervised clinic reception is an initial use case we would
+evaluate; we have not claimed an existing hospital deployment."
+
+Q04. Why did you choose Hindi and Hinglish?
+
+SAY: "We focused on patients who express themselves naturally in Hindi while
+mixing in English words. HELIOS replies in Hindi and stores clinical values in
+English or Roman Hinglish for the doctor."
+
+UNDERSTAND: Roman Hinglish means Hindi written using Latin letters. For example,
+'do din se thakan' can be recorded as 'fatigue for 2 days' if that meaning was
+actually reported.
+
+IF ASKED MORE: "That does not mean every accent, dialect or mixed-language
+expression has been evaluated. That is a next testing milestone."
+
+Q05. Why use voice instead of a form?
+
+SAY: "Voice lets a patient start with their own description, and the system can
+follow up on missing details instead of requiring them to understand a long
+form in advance."
+
+UNDERSTAND: Voice is an interaction choice, not a guarantee of accessibility.
+Some people cannot speak privately or cannot use voice comfortably.
+
+IF ASKED MORE: "We would evaluate an equally supported non-voice path before
+broad deployment. The current native flow depends on microphone access."
+
+Q06. Is HELIOS an AI doctor?
+
+SAY: "No. It collects reported information and supports referral and review.
+The clinician is responsible for diagnosis and treatment."
+
+UNDERSTAND: Choosing a starting department is different from identifying a
+disease. A symptom description alone does not establish a diagnosis.
+
+IF ASKED MORE: "The prompts and workflow restrict diagnosis and prescribing,
+but we do not claim that prompts make a model incapable of an incorrect output."
+
+Q07. How is this different from asking Gemini or ChatGPT directly?
+
+SAY: "HELIOS connects the conversation to a defined intake policy, validated
+records, specialization routing, doctor assignment and an authenticated review
+screen. Our contribution is the complete workflow around the model."
+
+UNDERSTAND: A conversation becomes a saved, reviewable record linked to the
+correct patient and doctor, instead of remaining only a general chat.
+
+IF ASKED MORE: "We use an existing model and do not claim to have invented the
+underlying speech intelligence."
+
+Q08. Why is AI necessary here?
+
+SAY: "AI helps understand varied spoken answers and produce natural Hindi
+responses. Explicit application rules control which information is accepted,
+what to ask next and how to route the completed intake."
+
+UNDERSTAND: It is a combination of AI language handling and ordinary software
+rules. Not every part needs AI.
+
+IF ASKED MORE: "A form could collect similar fields. The hypothesis we want to
+test is whether conversation improves the patient's experience and completeness."
+
+Q09. What is the project's innovation?
+
+SAY: "The contribution is bringing native Hindi voice, structured fact capture,
+controlled follow-ups and doctor handoff into one working prototype."
+
+UNDERSTAND: Integration can be valuable without inventing a new neural network.
+Explain the working connection between parts rather than claiming novelty in
+all of the individual technologies.
+
+IF ASKED MORE: "We have not established that this is the first product of its
+kind or that it outperforms every alternative."
+
+Q10. What can you actually demonstrate today?
+
+SAY: "Consent, Hindi voice interaction, contextual follow-ups, saved facts,
+specialization selection and a signed-in doctor's view of the same intake."
+
+UNDERSTAND: Point to the same patient's record on the doctor screen. That is
+stronger evidence of integration than showing unrelated static screens.
+
+IF ASKED MORE: "We also have automated checks and a recorded actual-provider
+roundtrip using synthetic Hindi audio."
+
+Q11. What benefit does the doctor get?
+
+SAY: "The doctor receives an organized starting history, including uncertainty
+and source references, instead of having to infer everything from a loose chat."
+
+UNDERSTAND: The doctor can quickly see the main concern, timing, severity and
+other captured details. The record remains patient-reported until reviewed.
+
+IF ASKED MORE: "The amount of review time saved has not been measured yet."
+
+Q12. What if a patient does not know an answer?
+
+SAY: "The system can store the answer as unknown and preserve that uncertainty.
+It should not silently replace an unknown answer with 'no'."
+
+UNDERSTAND: 'I do not know whether I have an allergy' and 'I have no known
+allergies' mean different things.
+
+IF ASKED MORE: "For fields where uncertainty is allowed, the policy avoids
+asking the same question endlessly. Conflicting answers require clarification."
+
+Q13. How long does a consultation take?
+
+SAY: "It depends on the answers, required follow-ups and provider response time.
+We have not established an average intake duration across real users."
+
+UNDERSTAND: The three-minute presentation plan is not a claim that every patient
+finishes intake in three minutes.
+
+IF ASKED MORE: "We would measure both completion time and information quality;
+making the interaction shorter by missing facts would not be a success."
+
+Q14. Is this useful in rural settings?
+
+SAY: "Hindi voice intake could be useful where typing or English forms are a
+barrier, but the current version needs internet and a microphone-enabled device."
+
+UNDERSTAND: Potential relevance does not establish readiness for low-connectivity
+settings or all rural communities.
+
+IF ASKED MORE: "We would first evaluate connectivity, privacy, assisted use and
+local language needs in the actual setting."
+
+Q15. How would you make money or sustain the project?
+
+SAY: "A possible model is a clinic subscription or per-completed-intake service,
+but pricing and willingness to pay need validation."
+
+UNDERSTAND: The patient and the paying organization might be different users.
+Revenue is a hypothesis; there is no documented customer contract or revenue here.
+
+IF ASKED MORE: "Before pricing, we would measure model usage, infrastructure,
+support costs and the value clinicians actually receive."
+
+Q16. How is HELIOS different from an EHR?
+
+SAY: "HELIOS focuses on collecting and preparing information before consultation.
+An EHR handles a much wider clinical record and organizational workflow."
+
+UNDERSTAND: HELIOS has record and review modules, but that does not make it a
+replacement for every hospital system.
+
+IF ASKED MORE: "Standards-based hospital integration is future work; we should
+not claim existing integration with a hospital's EHR."
+
+Q17. What would you do next if the project is selected?
+
+SAY: "First, have clinicians review our questions and routing rules. Then run a
+supervised, consented evaluation measuring missing facts, wrong facts, referral
+appropriateness and doctor editing effort."
+
+UNDERSTAND: The next step is evidence and operational readiness, not simply
+adding more animated screens or claiming more languages.
+
+IF ASKED MORE: "We would also configure a real clinic roster and test failures,
+privacy requirements and concurrent use before broader deployment."
+
+Q18. Why should the judges choose your project?
+
+SAY: "We can demonstrate the patient-to-doctor workflow, explain where decisions
+come from, and show what we tested. We also have a concrete evaluation plan for
+the parts that are not yet clinically validated."
+
+UNDERSTAND: Emphasize demonstrated work and honest scope, not unsupported
+comparisons with other teams.
+
+IF ASKED MORE: Show the actual intake and its source-linked brief.
+
+
+PART 4 — TECHNICAL QUESTIONS EXPLAINED FROM ZERO
+==============================================
+
+Q19. What is your technology stack?
+
+SAY: "Next.js and React build the interface. Java Spring Boot handles the new
+patient workflow. Python FastAPI connects native Gemini audio. Express serves
+the doctor workspace, and PostgreSQL stores shared records."
+
+UNDERSTAND: A stack is the collection of technologies used. Think of the screen,
+the people doing work behind it, and the filing cabinet where results are kept.
+
+IF ASKED MORE: TypeScript is used in the web/Express code, Prisma accesses the
+database from Node, JPA from Java, and Flyway manages current v2 schema setup.
+
+Q20. Explain the architecture without technical language.
+
+SAY: "The screen collects the patient's voice. One service connects it to the
+voice model. Another checks and organizes the answers. The saved information
+then appears on the authorized doctor's screen."
+
+UNDERSTAND: There are separate responsibilities, but one connected journey.
+The README contains a diagram you can point to.
+
+IF ASKED MORE: "The voice service is Python, the patient rules are Java, the
+doctor service is Express, and shared storage is PostgreSQL."
+
+Q21. Is it really voice-to-voice, or speech-to-text and then text-to-speech?
+
+SAY: "The active flow sends audio to Gemini Live and receives generated audio.
+It does not use a separate transcription model followed by a text model and
+a separate speech synthesizer."
+
+UNDERSTAND: Traditional cascades have separate sound-to-words and words-to-sound
+steps. Here the provider exposes native audio input and output.
+
+IF ASKED MORE: "Captions and structured tool calls still contain text. Native
+audio describes the audio interaction path, not the absence of all text."
+
+Q22. Which model did you train?
+
+SAY: "We did not train a foundation model. We integrated Gemini Live and built
+the application workflow, validation, follow-up policies and handoff around it."
+
+UNDERSTAND: Using a pre-trained model and training a new one are different tasks.
+Our routing dataset and tests are not a Gemini training run.
+
+IF ASKED MORE: "The model identifier is configurable. The current tested local
+configuration uses gemini-3.8-live, as recorded in the health report."
+
+Q23. Why is this not just an API wrapper?
+
+SAY: "The provider supplies speech intelligence. Our software also controls
+consent, patient identity, accepted fields, follow-ups, durable records,
+specialization, doctor access and the clinical summary."
+
+UNDERSTAND: A basic wrapper forwards a prompt and displays an answer. The
+additional value here is the connected, governed workflow and its data model.
+
+IF ASKED MORE: "That still makes the model a major dependency. We are honest
+about which capabilities come from the provider and which we built."
+
+Q24. How does the microphone reach the AI?
+
+SAY: "The browser captures digital sound and streams it over a signed WebSocket
+connection to our Python gateway, which sends it to Gemini Live. Generated
+audio returns along that path for playback."
+
+UNDERSTAND: WebSocket is an open, two-way connection. It avoids opening a new
+ordinary request for every small piece of sound.
+
+IF ASKED MORE: "The browser input is mono PCM16 at 24 kHz: one sound channel,
+16-bit samples, 24,000 samples each second."
+
+Q25. What is a tool call, and why do you use record_turn?
+
+SAY: "A tool call is the model asking our application to perform a defined
+action using structured fields. record_turn submits the facts from an answer
+so the backend can validate and save them."
+
+UNDERSTAND: Instead of trying to extract data later from a paragraph, the model
+proposes fields such as onset and severity in a predictable format.
+
+IF ASKED MORE: "The model cannot directly change database permissions or mark
+itself as a doctor. Its proposed information must pass application checks."
+
+Q26. How are your questions intelligent rather than random?
+
+SAY: "The next question depends on the stored facts and recognized symptom
+pattern. The policy prioritizes conflicts, relevant safety questions, missing
+core details and symptom-specific context. Gemini phrases it in natural Hindi."
+
+UNDERSTAND: The backend decides what information is needed; the model handles
+the language. Already answered fields are not supposed to be asked repeatedly.
+
+IF ASKED MORE: "The current policy is explicit and bounded. It is not an
+unrestricted medical reasoning system that covers every possible condition."
+
+Q27. Give an example of a contextual follow-up.
+
+SAY: "If someone reports abdominal discomfort, the policy includes questions
+about location and associated gastrointestinal symptoms. A skin concern instead
+can trigger a question about where the change is and whether it is spreading."
+
+UNDERSTAND: The example shows branching by complaint, not one identical list
+for every patient. It describes software behavior, not medical advice.
+
+IF ASKED MORE: "The implemented rules still need clinician evaluation for
+coverage, wording and appropriate escalation."
+
+Q28. How do you choose the specialization?
+
+SAY: "The Java router matches reported information against versioned rules,
+scores candidate departments and applies supported context and emergency rules.
+Broad or ambiguous cases can go to a generalist starting point."
+
+UNDERSTAND: This is explainable rule-based routing, not a trained classifier
+with a published clinical accuracy score.
+
+IF ASKED MORE: "Gemini does not independently assign a doctor. The application
+stores the routing reason and then checks the available doctor roster."
+
+Q29. Does a high confidence score mean a disease is 95% certain?
+
+SAY: "No. The routing scores are heuristic match scores, and extraction has
+confidence labels. Neither is a calibrated disease probability."
+
+UNDERSTAND: A strong match to a rule does not prove that the patient has the
+condition a judge might associate with that department.
+
+IF ASKED MORE: "We would need a suitable labelled evaluation and calibration
+study before making statistical confidence claims."
+
+Q30. How is the doctor selected, and what if no doctor is available?
+
+SAY: "The service looks for an active doctor accepting the recommended specialty
+and considers active workload. If it cannot find one, the intake is saved and
+awaits clinic assignment."
+
+UNDERSTAND: Selecting a department and finding an available person are separate
+steps. Saving a record is not the same as confirming a doctor received it.
+
+IF ASKED MORE: "The local doctor is configured for Internal Medicine only.
+Other departments need a configured roster; we should not invent availability."
+
+Q31. What data is saved?
+
+SAY: "The project saves identity/session information, consent, structured facts,
+their source and uncertainty, visit/routing information and doctor assignment.
+The doctor brief is built from saved information."
+
+UNDERSTAND: A fact is more than a value. It also has a field name, knowledge
+state, confidence label, source and identifiers linking it to the interaction.
+
+IF ASKED MORE: "The gateway does not save ordinary patient microphone audio.
+The synthetic test harness separately keeps generated test audio."
+
+Q32. Why is the conversation Hindi but the record English or Hinglish?
+
+SAY: "The spoken interface follows the patient's Hindi conversation, while
+the structured values use English or Roman Hinglish for a consistent record
+and doctor workflow."
+
+UNDERSTAND: Speaking language and record format can be different. The model
+must preserve meaning, negatives and uncertainty when proposing saved values.
+
+IF ASKED MORE: "Translation or normalization can still introduce mistakes.
+Validation and clinician review reduce risk but do not prove perfect accuracy."
+
+Q33. What happens when answers contradict each other?
+
+SAY: "The intake can represent a conflict and prioritize a clarification
+question instead of silently treating the record as certain."
+
+UNDERSTAND: Saying 'no medication' and later reporting a daily medicine may
+require clarification rather than overwriting context without consideration.
+
+IF ASKED MORE: "This depends partly on correct model extraction. We need
+broader contradiction tests before claiming every conflict is detected."
+
+Q34. How do you reduce hallucinations?
+
+SAY: "We restrict the tool's fields, validate candidates on the server, preserve
+unknown/conflicting states, control follow-up decisions and show provenance for
+review. We do not automatically treat model output as clinical truth."
+
+UNDERSTAND: A hallucination is an invented or unsupported AI statement. A schema
+can reject a wrong format, but a plausible-looking wrong fact can still pass it.
+
+IF ASKED MORE: "These measures reduce opportunities for errors; they do not
+eliminate hallucinations or replace clinical evaluation."
+
+Q35. How is the clinical summary generated?
+
+SAY: "The doctor API builds a brief from stored structured facts and other
+available records, with source references and review status. The current live
+facts are included in that brief."
+
+UNDERSTAND: The doctor sees organized statements such as onset and severity,
+not just a free-form model response with no connection to the saved record.
+
+IF ASKED MORE: "A source revision and generator version help decide whether a
+previous brief can be reused or needs updating. A doctor can verify, correct,
+reject or mark a native intake fact uncertain in the Verification Center. The
+updated brief reflects that review; rejected facts are not active claims."
+
+Q36. Why PostgreSQL, Prisma, JPA and Flyway? Aren't these all databases?
+
+SAY: "PostgreSQL is the database. Prisma and JPA help different languages read
+and write its records. Flyway tracks the database structure changes for v2."
+
+UNDERSTAND: PostgreSQL is the filing cabinet. Prisma/JPA are ways to use it from
+Node/Java. Flyway is the ordered list of changes to the cabinet's structure.
+
+IF ASKED MORE: "Both APIs share records, so migration ownership matters. We do
+not blindly apply the legacy Prisma and v2 Flyway histories to one live schema."
+
+Q37. Why use Java, Python and Node instead of one backend?
+
+SAY: "The existing doctor/document modules were built in Express. The new
+patient policy layer is Java, and Python handles the native voice provider.
+We retained working modules while developing the new flow."
+
+UNDERSTAND: This is an evolution and responsibility decision, not proof that
+every language is essential or automatically makes the system faster.
+
+IF ASKED MORE: "It adds deployment and maintenance complexity. Consolidating
+services is a reasonable future option if it improves maintainability."
+
+Q38. What happens if the connection drops?
+
+SAY: "The client attempts a bounded reconnect with a fresh voice ticket and
+restores persisted context. If recovery fails, it shows an error rather than
+pretending the consultation completed."
+
+UNDERSTAND: Bounded means a limited number of retries. Saved facts can survive
+a connection loss; unsaved in-flight audio is not guaranteed to survive.
+
+IF ASKED MORE: "Control events track their last sequence to support resumption.
+The client can check persisted completion if the final message was lost. A
+visible reconnect button resumes the current session after fixing connectivity.
+Recovery is useful, but it is not a guarantee of zero data loss in every failure."
+
+Q39. Can the patient interrupt the assistant?
+
+SAY: "The runtime and audio client support interruption behavior for a live
+conversation, including stopping outdated playback when interrupted."
+
+UNDERSTAND: This is sometimes called barge-in: speaking before the assistant
+has finished. Support in the code is different from perfect behavior in noise.
+
+IF ASKED MORE: "We still need broader physical-microphone, echo and real-user
+testing before claiming human-level interruption handling."
+
+Q40. How did you reduce time and space complexity?
+
+SAY: "We improved specific operations: fixed-size audio accumulation, bounded
+buffers/retries, indexed matching and grouping, cleanup of audio resources, and
+reusing valid clinical briefs."
+
+UNDERSTAND: Time complexity describes how work grows with input size. Space
+complexity describes extra memory. A Map is a lookup structure that can avoid
+searching the same list repeatedly.
+
+IF ASKED MORE: "Some grouping can become expected O(n) rather than repeated
+O(n-squared) scans, with O(n) lookup storage. That does not make the entire
+project O(n), nor prove a measured speedup across the whole application."
+
+Q41. What does O(n) versus O(n-squared) actually mean?
+
+SAY: "If we process each of n items roughly once, work grows approximately in
+proportion to n. If we compare every item with every other one, the work can
+grow approximately with n multiplied by n."
+
+UNDERSTAND: For 100 items, one pass is roughly 100 visits; an all-pairs approach
+can involve roughly 10,000 comparisons. These are illustrations, not timings.
+
+IF ASKED MORE: "Maps and Sets can trade some extra memory for faster lookup.
+Database work, sorting and external model time must be analyzed separately."
+
+Q42. Can it scale to thousands of simultaneous patients?
+
+SAY: "We have not demonstrated that scale. Each active voice conversation uses
+a live connection and provider capacity, so concurrency needs load testing and
+quota planning."
+
+UNDERSTAND: A successful single-session demo does not establish thousands of
+concurrent sessions. More machines alone do not resolve every shared-state issue.
+
+IF ASKED MORE: "We would evaluate connection-aware deployment, shared state or
+coordination, distributed rate controls, database pools and measured bottlenecks."
+
+
+PART 5 — TESTING, PRIVACY, COST AND DIFFICULT CHALLENGES
+=====================================================
+
+Q43. How do you know it works?
+
+SAY: "We checked individual components, database integration, browser behavior
+and an actual Gemini roundtrip. Synthetic Hindi audio led to stored facts and
+the same intake appeared after authenticated doctor login."
+
+UNDERSTAND: Different checks establish different things. A simulated browser
+test proves UI behavior; an actual provider test proves the connected path for
+that example. Neither proves clinical accuracy for every patient.
+
+IF ASKED MORE: "The final engineering review separates actual provider tests from
+simulated transport and explicitly lists skipped checks."
+
+Q44. What are your test results?
+
+SAY: "The latest recorded component and integration checks have 327 passing API
+tests, 92 web tests, 53 Java tests, 33 Python tests and 20 database tests. The
+final engineering review records the latest browser, build and runtime results."
+
+UNDERSTAND: These are suite results recorded during the 4-5 October 2026 audit, not an accuracy score.
+There were 13 conditional API skips and 1 optional database-suite handoff skip.
+The expanded browser suite passed 16 checks; use the final review for the
+regression count and its exact scope rather than quoting that older total.
+
+IF ASKED MORE: "The actual native handoff was checked separately. We do not
+claim that all possible tests ran or that every test represents a unique patient."
+
+Q45. Was the voice test real or mocked?
+
+SAY: "Both kinds were used for different purposes. UI tests simulate transport.
+The native roundtrip sends synthetic spoken Hindi through the actual Gemini
+gateway, Java backend and database, then checks the doctor handoff."
+
+UNDERSTAND: Synthetic means the patient's content is invented. It does not mean
+the external model call was fake.
+
+IF ASKED MORE: "Three spoken turns produced five facts and Hindi response
+audio in the recorded roundtrip. That is not a physical-microphone user study."
+
+Q46. What is your clinical accuracy percentage?
+
+SAY: "We do not have a clinically validated accuracy percentage yet. Our current
+evidence establishes software behavior on tested cases."
+
+UNDERSTAND: Reporting a percentage requires a defined task, labelled examples,
+an evaluation method and a suitable sample. Test counts are not a substitute.
+
+IF ASKED MORE: "We would separately measure extracted-fact precision/recall,
+omissions, referral appropriateness and clinician corrections on reviewed cases."
+
+Q47. How would you measure success in a pilot?
+
+SAY: "We would measure whether the record is correct and complete, whether the
+referral is appropriate, how often patients finish, and how much the clinician
+needs to correct or re-ask."
+
+UNDERSTAND: Precision asks how many saved facts are correct. Recall asks how
+many relevant reported facts were captured. Latency and satisfaction matter,
+but a fast, inaccurate intake is not useful.
+
+IF ASKED MORE: "Compare against the clinic's existing intake process, report
+sample sizes and uncertain results, and include noisy/mixed-language cases."
+
+Q48. Is patient data private if Gemini processes the voice?
+
+SAY: "The voice is sent to an external provider. Our gateway does not retain
+ordinary microphone recordings, but structured clinical facts are stored by
+HELIOS. Provider processing and deployment governance need separate review."
+
+UNDERSTAND: 'We do not save raw audio' is not the same as 'audio never leaves
+the device' or 'the provider retains nothing'.
+
+IF ASKED MORE: "We cannot infer provider retention or account terms from our
+application code and should not promise them without reviewing the agreement."
+
+Q49. How do you protect the doctor's account and patient records?
+
+SAY: "Passwords are stored as salted scrypt hashes. Signed sessions and tickets
+identify authorized requests, and doctor record access checks assignment."
+
+UNDERSTAND: Authentication asks 'who are you?' Authorization asks 'may you see
+this patient?' A valid login alone should not allow every patient's record.
+
+IF ASKED MORE: "These are implemented controls, not a security certification.
+Production identity, deployment controls and independent assessment remain work."
+
+Q50. Are tokens, hashing and encryption the same thing?
+
+SAY: "No. A token carries authorization information, a signature helps detect
+tampering, a password hash supports password checking, and encryption protects
+readable information using keys."
+
+UNDERSTAND: A signed ticket is not necessarily secret just because it is signed.
+Hashing a password does not encrypt the entire database.
+
+IF ASKED MORE: "Remote deployment needs HTTPS/WSS and appropriate storage and
+secret-management controls. We do not claim end-to-end encryption that excludes
+the provider, because the provider processes the audio."
+
+Q51. Can a patient tell the AI to ignore the rules or access another record?
+
+SAY: "Spoken instructions must not become authorization. The model has a bounded
+fact tool, while the server checks session access, fields and doctor permissions."
+
+UNDERSTAND: This is related to prompt injection: an input tries to make the AI
+follow instructions outside its task. Server controls protect permissions even
+when the input is misleading.
+
+IF ASKED MORE: "A malicious utterance might still contaminate extracted content.
+Adversarial testing is needed; we do not claim all prompt attacks are solved."
+
+Q52. What if HELIOS recommends the wrong department?
+
+SAY: "The recommendation is referral support with a stated reason, not a final
+clinical decision. It must be reviewed, and uncertain cases can use a generalist
+starting point."
+
+UNDERSTAND: A referral suggestion can be wrong even when the software has no
+crash. Clinical quality and software reliability are separate questions.
+
+IF ASKED MORE: "We need clinician-labelled evaluation and an operational way to
+redirect a patient. We should not claim that misrouting is impossible."
+
+Q53. Does HELIOS detect emergencies?
+
+SAY: "There are selected symptom-specific safety questions and emergency-related
+routing rules. They are draft application logic, not a validated emergency
+screening service or a guarantee of immediate detection."
+
+UNDERSTAND: Do not claim an ambulance is contacted or that every dangerous
+condition is recognized. Rule coverage and when escalation happens both matter.
+
+IF ASKED MORE: "Urgent presentations and early escalation need dedicated
+clinical review and testing. Our current evidence is not emergency certification."
+
+Q54. Is HELIOS legally compliant or medically certified?
+
+SAY: "We do not claim a completed compliance assessment or medical certification.
+Consent and access controls are implemented, but they are only parts of a wider
+deployment and governance process."
+
+UNDERSTAND: A privacy checkbox does not automatically satisfy every applicable
+requirement. Requirements depend on use, jurisdiction and deployment.
+
+IF ASKED MORE: "Before patient deployment, we would obtain the appropriate
+clinical, privacy, legal and security review rather than promise compliance here."
+
+Q55. Is it free? What happens when the API quota is exhausted?
+
+SAY: "The intended demo setup uses an eligible free-tier project with billing
+disabled. That is quota-limited, and the application cannot verify billing
+settings from the key. We do not promise unlimited free usage."
+
+UNDERSTAND: An API key is a credential, not a price guarantee. Provider usage,
+hosting, storage and support all matter to a future production cost.
+
+IF ASKED MORE: "If the provider becomes unavailable or quota is exhausted, the
+live flow can fail or enter recovery. It does not silently become a free offline
+model. We would measure cost per completed intake before proposing pricing."
+
+Q56. Does it work without the internet? Why not run the model on this laptop?
+
+SAY: "The active Gemini Live conversation needs internet. Local web servers and
+a local database do not make the externally hosted voice model offline."
+
+UNDERSTAND: An experimental local adapter exists, but its configured hardware
+requirements exceed the tested PC. It is not a working offline fallback here.
+
+IF ASKED MORE: "An alternative model would need suitable hardware, Hindi quality
+evaluation, performance measurements and a verified integration."
+
+Q57. What are the biggest limitations right now?
+
+SAY: "External model dependence, bounded question/routing rules, a limited local
+doctor roster, and no broad clinical, accent or concurrent-user validation yet."
+
+UNDERSTAND: These are specific boundaries, not a reason to pretend the working
+demo does nothing. The end-to-end software path works for the tested example.
+
+IF ASKED MORE: "Docker is configured but was not executed on the test machine.
+An operational demo is not the same as a production hospital deployment."
+
+Q58. What if the live demonstration fails?
+
+SAY: "I will explain whether the failure is in the microphone, network, provider
+or application, then show clearly labelled recorded test evidence if available.
+I will not present a replay or mock as a live AI call."
+
+UNDERSTAND: Good preparation includes a recent synthetic record, screenshots,
+health checks and knowledge of the failure boundaries.
+
+IF ASKED MORE: "The backup proves a previous tested run, not that the current
+provider connection is healthy."
+
+Q59. Did you use AI tools to build this? What did you personally build?
+
+SAY: "I used development assistance where applicable. The project integrates
+Gemini with our patient-to-doctor workflow, and I can explain the components and
+demonstrate the checks. I will distinguish assistance from my own contributions."
+
+UNDERSTAND: Adapt this to your actual experience. Do not claim that you personally
+wrote every file, trained the model or ran a user study if you did not.
+
+IF ASKED MORE: Describe your real work: problem selection, requirements, design,
+implementation, testing or presentation. Follow the hackathon's disclosure rules.
+
+Q60. Why should we trust your answers if you are still learning the code?
+
+SAY: "I separate what I can demonstrate from what is planned. I can explain the
+main workflow and show the relevant code or test evidence. If a detail is outside
+what I have verified, I will say so and check it."
+
+UNDERSTAND: Understanding and honesty are better than using technical words you
+cannot explain. The judges may care as much about reasoning as memorization.
+
+IF ASKED MORE: "I do not want to invent an answer. Here is what the current
+implementation establishes, and here is the detail I need to verify."
+
+
+PART 6 — RAPID-FIRE ANSWERS TO PRACTISE
+======================================
+
+What is it?
+  A Hindi voice intake assistant that prepares structured context for a doctor.
+
+Is it an AI doctor?
+  No. It supports intake and referral; the clinician diagnoses and treats.
+
+Did you train Gemini?
+  No. We integrated an existing native audio model.
+
+Where is your own contribution?
+  The patient workflow, policies, validation, records, routing and doctor handoff.
+
+Who decides the next question?
+  The backend policy; the model phrases it naturally in Hindi.
+
+Who selects the specialty?
+  The Java routing rules, not an unrestricted model assignment.
+
+Does it save voice recordings?
+  The gateway does not retain normal microphone audio; it saves structured facts.
+  External provider processing is a separate issue.
+
+Is everything offline?
+  No. The active voice model requires internet.
+
+Is it clinically accurate?
+  Clinical accuracy has not yet been established; tested software paths pass.
+
+Is it unlimited and free?
+  No. Provider tier, quota and account settings apply.
+
+Can every doctor see every patient?
+  Doctor access checks identity and assignment.
+
+What is the biggest next step?
+  Clinician-reviewed evaluation and a supervised pilot.
+
+
+PART 7 — YOUR OPENING, DEMO AND CLOSING
+======================================
+
+30-SECOND OPENING
+
+"HELIOS helps a patient explain symptoms in Hindi or Hinglish and turns the
+conversation into structured information for a doctor. It uses native voice
+interaction, asks follow-up questions based on the reported concern, and
+recommends a starting specialization. The doctor receives the facts and their
+context in an authenticated workspace. We have tested the local voice-to-doctor
+path using synthetic Hindi audio; clinical validation is our next milestone."
+
+BEGINNER'S THREE-MINUTE DEMO PLAN
+
+0:00–0:25 — Explain the problem and the two users.
+  Say: "We want to prepare the basic history before the clinician starts."
+
+0:25–1:30 — Open http://localhost:3000/patient.
+  Use a fictional patient. Give consent, allow the microphone and describe a
+  mild synthetic fatigue concern. Respond to the actual follow-up questions.
+  Say: "The conversation is Hindi; facts are recorded in English or Hinglish."
+  Do not promise that every interaction will finish within this time window.
+
+1:30–2:15 — Open the doctor workspace after signing in.
+  Use doctor ID helios-local and the access code from your PRIVATE .env.
+  Do not display the .env file or announce its secret value to the judges.
+  Select the same patient and point to facts, evidence, routing and the brief.
+  Say: "These are reported facts, not a diagnosis."
+  If time permits, open Verification -> Live intake, review one synthetic fact,
+  verify or correct it, then refresh the workspace to show the review status.
+
+2:15–2:40 — Explain the architecture using the README diagram.
+  Say: "Gemini handles native speech; the server controls records and routing."
+
+2:40–3:00 — Close with evidence and a concrete next step.
+  Say: "We demonstrated the connected software flow. Next we will evaluate fact
+  quality and referral appropriateness with clinicians."
+
+IF THE DEMO FAILS
+
+1. State the failure honestly and avoid repeatedly clicking controls.
+2. Check microphone permission and whether all four services are running.
+   After granting permission, use the Hindi microphone retry button. After
+   restoring a broken connection, use the Hindi reconnect button. A completed
+   consultation offers a new-conversation button for repeating the demo.
+3. If network/model access is unavailable, show a previously saved synthetic
+   record or screenshot and explicitly label it as a previous test.
+4. Explain what that evidence proves and what the current failure prevents.
+
+ONE-SENTENCE CLOSING
+
+"HELIOS prepares the conversation for the doctor; our next step is proving that
+the information is useful, accurate and appropriate in a supervised setting."
+
+
+PART 8 — WHERE TO FIND PROOF WHEN A JUDGE ASKS
+============================================
+
+These are repository-relative paths. You do not need to memorize them; bookmark
+the files you plan to show. Never open the private .env during a screen share.
+
+Current overview and setup:
+  README.md
+
+Authoritative current engineering results and limitations:
+  docs/final-engineering-review-2026-10-05.md
+
+Earlier results, retained as historical evidence:
+  docs/health-check-2026-10-04.md
+
+Native voice architecture and operation:
+  docs/live-consultation.md
+
+The actual Gemini adapter and record_turn definition:
+  voice-service/src/helios_voice_bench/runtime/gemini_live.py
+
+Question-selection policy:
+  backend-java/src/main/java/com/helios/patient/intake/FollowUpPolicyEngine.java
+
+Specialization routing:
+  backend-java/src/main/java/com/helios/patient/routing/SpecializationRoutingEngine.java
+
+Doctor handoff:
+  backend-java/src/main/java/com/helios/patient/routing/IntakeHandoffService.java
+
+Clinical brief construction:
+  apps/api/src/clinical-brief/clinical-brief-builder.ts
+
+Doctor password hashing:
+  apps/api/src/security/doctor-password.ts
+
+Patient clinician interface:
+  apps/web/src/components/patient/live-doctor-consultation.tsx
+
+Browser check for actual doctor receipt:
+  tests/e2e/doctor-native-handoff.spec.ts
+
+Actual-provider synthetic roundtrip report (generated locally, not committed):
+  .local/live-roundtrip.json
+
+Commands to know, from the project root:
+  pnpm dev                 Start the complete local development stack.
+  pnpm start               Start all four services using prepared production builds.
+                           Build first with pnpm build and Java mvnw.cmd clean package.
+  pnpm presentation:check  Check running service readiness before presenting.
+  pnpm local:doctor        Provision/update the configured local doctor.
+  pnpm test                Run the JavaScript/TypeScript test suites.
+  pnpm test:live-ui        Check browser behavior with simulated audio transport.
+  pnpm voice:roundtrip     Exercise actual native audio; consumes provider quota.
+
+The README contains the remaining Java/Python/database checks and prerequisites.
+Do not run another server stack on occupied ports during the presentation.
+
+
+PART 9 — TEN CLAIMS TO AVOID, AND WHAT TO SAY INSTEAD
+===================================================
+
+1. Avoid: "We diagnose diseases."
+   Say: "We organize reported information and support referral and review."
+
+2. Avoid: "We built or trained Gemini."
+   Say: "We integrated Gemini and built the surrounding workflow."
+
+3. Avoid: "This is clinically 99% accurate."
+   Say: "We have software checks; clinical accuracy needs a defined evaluation."
+
+4. Avoid: "Patient data never leaves the device."
+   Say: "The external model processes audio; our gateway does not retain normal
+   microphone recordings."
+
+5. Avoid: "It is completely free and unlimited."
+   Say: "The intended demo setup uses eligible free-tier quota; limits apply."
+
+6. Avoid: "Every emergency is detected immediately."
+   Say: "Selected rules exist, but emergency screening is not clinically validated."
+
+7. Avoid: "It runs fully offline."
+   Say: "The active Gemini voice flow needs internet."
+
+8. Avoid: "Every specialty already has a doctor."
+   Say: "The current local account covers Internal Medicine; others need a roster."
+
+9. Avoid: "All tests pass, so it is production ready."
+   Say: "The recorded checks establish tested software behavior, with stated
+   skips and limits. Deployment and clinical validation remain separate."
+
+10. Avoid: "We have partnerships, users or measured savings" without evidence.
+    Say: "These are proposed pilot goals, and this is how we would measure them."
+
+
+PART 10 — A SIMPLE REHEARSAL ROUTINE
+===================================
+
+First 10 minutes:
+  Read the project story, learn frontend/backend/API/database, and explain the
+  patient's path without looking at this file.
+
+Next 15 minutes:
+  Practise Q01, Q02, Q06, Q07, Q19, Q21, Q26, Q28, Q43 and Q57 aloud.
+  These cover purpose, boundaries, stack, native audio, rules and evidence.
+
+Next 15 minutes:
+  Rehearse the patient-to-doctor demonstration. Find the same patient record,
+  point out one fact and its source, and explain one limitation naturally.
+
+Final 10 minutes:
+  Ask a friend to challenge you with "Isn't this just Gemini?", "What is your
+  accuracy?", "What if it is wrong?", "Does it work offline?" and "What did you
+  personally build?" Answer briefly and truthfully.
+
+When you do not know a detail, use:
+  "I do not have that verified measurement. Here is what we tested, and this
+  is the check I would run to answer it properly."
+
+Understanding the project is more useful than memorizing impressive terminology.

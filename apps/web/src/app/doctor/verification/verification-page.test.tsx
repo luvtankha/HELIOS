@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import VerificationPage from "./page";
 
@@ -68,6 +74,7 @@ const review = {
 
 describe("Verification Center", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     queue.mockResolvedValue({
       items: [item],
       metrics: {
@@ -85,6 +92,94 @@ describe("Verification Center", () => {
       dependentRefreshPending: false,
       message: "Verification saved and related views were refreshed.",
     });
+  });
+
+  it("ignores an older queue response after the search has changed", async () => {
+    let completeOld!: (value: unknown) => void;
+    queue.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          completeOld = resolve;
+        }),
+    );
+    queue.mockResolvedValue({
+      items: [{ ...item, label: "New search result" }],
+      metrics: {
+        needsReview: 1,
+        conflicts: 0,
+        verifiedToday: 0,
+        correctedToday: 0,
+        rejectedToday: 0,
+      },
+    });
+    render(<VerificationPage />);
+    fireEvent.change(
+      screen.getByRole("textbox", { name: /Search verification queue/ }),
+      { target: { value: "new" } },
+    );
+    expect(
+      await screen.findByRole("heading", { name: "New search result" }),
+    ).toBeInTheDocument();
+    await act(async () => {
+      completeOld({
+        items: [item],
+        metrics: {
+          needsReview: 1,
+          conflicts: 0,
+          verifiedToday: 0,
+          correctedToday: 0,
+          rejectedToday: 0,
+        },
+      });
+    });
+    expect(
+      screen.getByRole("heading", { name: "New search result" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Metformin" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("corrects a native intake value without losing its explicit knowledge state", async () => {
+    const live = {
+      ...item,
+      factType: "LIVE_INTAKE_FACT",
+      label: "Onset",
+      conflict: false,
+      value: { value: "two days ago", knowledgeState: "KNOWN" },
+    };
+    queue.mockResolvedValue({
+      items: [live],
+      metrics: {
+        needsReview: 1,
+        conflicts: 0,
+        verifiedToday: 0,
+        correctedToday: 0,
+        rejectedToday: 0,
+      },
+    });
+    detail.mockResolvedValue({ ...review, ...live, previous: undefined });
+    render(<VerificationPage />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Review evidence" }),
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Correct" }));
+    fireEvent.change(screen.getByLabelText("Value"), {
+      target: { value: "three days ago" },
+    });
+    fireEvent.change(screen.getByLabelText(/Reason/), {
+      target: { value: "Patient clarification" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save correction" }));
+    await waitFor(() => expect(action).toHaveBeenCalledOnce());
+    expect(action).toHaveBeenCalledWith(
+      "review",
+      "CORRECT",
+      expect.objectContaining({
+        correctedValue: { value: "three days ago", knowledgeState: "KNOWN" },
+      }),
+      "signed",
+    );
   });
 
   it("shows workflow priority, provenance, and side-by-side conflict evidence", async () => {

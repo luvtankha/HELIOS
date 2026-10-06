@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "languagePolicy": "Hindi + Hinglish; no English-only patient mode",
+  "scenarios": [
+    {"id":"H01","name":"Devanagari Hindi symptom description","required":true,"tags":["hindi","devanagari"],"patientPrompt":"मेरे सीने में आज सुबह से दबाव महसूस हो रहा है।","expected":["remain_hindi_or_hinglish","acknowledge_pressure_not_diagnosis"]},
+    {"id":"H02","name":"Romanized Hindi symptom description","required":true,"tags":["hindi","romanized"],"patientPrompt":"Mere pet mein kal raat se dard ho raha hai.","expected":["understand_romanized_hindi","ask_contextual_followup"]},
+    {"id":"H03","name":"Intra-sentence Hinglish chest pressure","required":true,"tags":["hinglish","code_switch"],"patientPrompt":"Mere chest mein thoda pressure feel ho raha hai since morning.","expected":["preserve_code_switch","ask_contextual_followup"]},
+    {"id":"H04","name":"Hinglish abdominal pain","required":true,"tags":["hinglish","medical_vocabulary"],"patientPrompt":"Stomach ke right side mein sharp pain hai, especially walk karne pe.","expected":["preserve_location","preserve_trigger","ask_missing_fact"]},
+    {"id":"H05","name":"Patient correction/self-repair","required":true,"tags":["correction"],"patientPrompt":"Pain nahi actually pressure hai.","expected":["replace_conflicting_fact","do_not_repeat_wrong_fact"]},
+    {"id":"H06","name":"Single barge-in","required":true,"tags":["barge_in","cancellation"],"patientPrompt":"Interrupt the assistant mid-question with a correction.","expected":["stop_assistant_audio","continue_same_session","use_interruption_context"]},
+    {"id":"H07","name":"Repeated overlap","required":true,"tags":["barge_in","overlap"],"patientPrompt":"Interrupt twice during one assistant turn.","expected":["idempotent_cancel","no_stale_audio_resume"]},
+    {"id":"H08","name":"Backchannel","required":true,"tags":["backchannel"],"patientPrompt":"haan / hmm / ji","expected":["do_not_treat_every_backchannel_as_new_answer"]},
+    {"id":"H09","name":"Uncertain answer","required":true,"tags":["uncertainty"],"patientPrompt":"Shayad teen din se, exact yaad nahi.","expected":["preserve_uncertainty","avoid_false_precision"]},
+    {"id":"H10","name":"Conflicting answer","required":true,"tags":["conflict"],"patientPrompt":"Pehle bola subah se; ab yaad aa raha hai kal raat se tha.","expected":["mark_conflict_or_correction","clarify_if_needed"]},
+    {"id":"H11","name":"Medication and allergy vocabulary","required":true,"tags":["medical_vocabulary"],"patientPrompt":"BP ki medicine amlodipine leta hoon aur penicillin se allergy hai.","expected":["preserve_medication","preserve_allergy"]},
+    {"id":"H12","name":"Numbers and durations","required":true,"tags":["numbers","duration"],"patientPrompt":"Pain 7 out of 10 hai aur around 20 minutes se hai.","expected":["preserve_severity","preserve_duration"]},
+    {"id":"H13","name":"Noisy microphone","required":true,"tags":["noise","audio_quality"],"patientPrompt":"Use the H03 utterance with controlled background noise.","expected":["remain_usable_or_request_clarification","do_not_invent_fact"]},
+    {"id":"H14","name":"Long pause","required":true,"tags":["pause","turn_taking"],"patientPrompt":"Pause for several seconds mid-answer, then continue.","expected":["avoid_premature_turn_end","retain_partial_context"]},
+    {"id":"H15","name":"Long multi-turn intake","required":true,"tags":["context","long_session"],"patientPrompt":"Run a multi-turn intake containing onset, pattern, severity, associated symptoms, history, medication and one correction.","expected":["retain_known_facts","avoid_reasking_known_facts","preserve_correction"]}
+  ]
+}
+

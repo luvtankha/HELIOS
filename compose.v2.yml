@@ -1,0 +1,122 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-helios}
+      POSTGRES_USER: ${POSTGRES_USER:-helios}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - helios-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-helios} -d ${POSTGRES_DB:-helios}",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  patient-api:
+    build:
+      context: ./backend-java
+    environment:
+      HELIOS_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-helios}
+      HELIOS_DATABASE_USER: ${POSTGRES_USER:-helios}
+      HELIOS_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      HELIOS_FLYWAY_ENABLED: "true"
+      HELIOS_FLYWAY_BASELINE_ON_MIGRATE: ${HELIOS_FLYWAY_BASELINE_ON_MIGRATE:-true}
+      SESSION_TOKEN_SECRET: ${SESSION_TOKEN_SECRET:?Set SESSION_TOKEN_SECRET}
+      HELIOS_ALLOWED_ORIGINS: ${HELIOS_ALLOWED_ORIGINS:-http://localhost:3000}
+      HELIOS_VOICE_RUNTIME_URI: http://voice-runtime:9090
+      HELIOS_VOICE_PUBLIC_URI: ${NEXT_PUBLIC_VOICE_RUNTIME_URL:-http://localhost:9090}
+      HELIOS_VOICE_RUNTIME_SECRET: ${HELIOS_VOICE_RUNTIME_SECRET:?Set HELIOS_VOICE_RUNTIME_SECRET}
+      HELIOS_VOICE_CONTROL_SECRET: ${HELIOS_VOICE_CONTROL_SECRET:?Set HELIOS_VOICE_CONTROL_SECRET}
+      HELIOS_VOICE_REQUIRE_BENCHMARK_APPROVAL: ${HELIOS_VOICE_REQUIRE_BENCHMARK_APPROVAL:-false}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --fail --silent http://localhost:8080/actuator/health | grep -q UP",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  patient-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000}
+        NEXT_PUBLIC_PATIENT_API_V2_URL: ${NEXT_PUBLIC_PATIENT_API_V2_URL:-http://localhost:8080}
+        NEXT_PUBLIC_VOICE_RUNTIME_URL: ${NEXT_PUBLIC_VOICE_RUNTIME_URL:-http://localhost:9090}
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000}
+      NEXT_PUBLIC_PATIENT_API_V2_URL: ${NEXT_PUBLIC_PATIENT_API_V2_URL:-http://localhost:8080}
+      NEXT_PUBLIC_VOICE_RUNTIME_URL: ${NEXT_PUBLIC_VOICE_RUNTIME_URL:-http://localhost:9090}
+    ports:
+      - "3000:3000"
+    depends_on:
+      patient-api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  voice-runtime:
+    build:
+      context: ./voice-service
+    environment:
+      HELIOS_VOICE_PROVIDER: gemini-live
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?Set GEMINI_API_KEY}
+      HELIOS_GEMINI_LIVE_MODEL: ${HELIOS_GEMINI_LIVE_MODEL:-gemini-3.8-live}
+      HELIOS_PATIENT_API_URL: http://patient-api:8080
+      HELIOS_VOICE_RUNTIME_SECRET: ${HELIOS_VOICE_RUNTIME_SECRET:?Set HELIOS_VOICE_RUNTIME_SECRET}
+      HELIOS_VOICE_CONTROL_SECRET: ${HELIOS_VOICE_CONTROL_SECRET:?Set HELIOS_VOICE_CONTROL_SECRET}
+      HELIOS_VOICE_BENCHMARK_RESULTS: /app/benchmarks/measured-results.jsonl
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  doctor-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-helios}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-helios}
+      SESSION_TOKEN_SECRET: ${SESSION_TOKEN_SECRET:?Set SESSION_TOKEN_SECRET}
+      DOCTOR_DEMO_ACCESS_CODE: ${DOCTOR_DEMO_ACCESS_CODE:?Set DOCTOR_DEMO_ACCESS_CODE}
+      WEB_ORIGIN: ${HELIOS_ALLOWED_ORIGINS:-http://localhost:3000}
+      ENABLE_DEMO_MODE: "false"
+      DEMO_MODE: "false"
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    depends_on:
+      patient-api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    volumes:
+      - ./ops/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9091:9090"
+    depends_on:
+      patient-api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  helios-postgres:

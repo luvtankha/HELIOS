@@ -17,7 +17,7 @@ const foundations = [
   {
     icon: "✓",
     title: "Doctor-reviewable",
-    copy: "The architecture reserves verification boundaries for future clinical workflows.",
+    copy: "Patient-reported facts and their evidence remain available for the clinician to review.",
   },
 ];
 
@@ -70,15 +70,15 @@ export default function Home() {
             <div className="rounded-[1.5rem] bg-ink p-7 text-white">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-[0.25em] text-white/60">
-                  System status
+                  Consultation flow
                 </span>
-                <span className="h-3 w-3 rounded-full bg-emerald-400" />
+                <span aria-hidden="true" className="text-teal-200">→</span>
               </div>
               <p className="mt-10 font-serif text-3xl">
-                A calm foundation for safer future care journeys.
+                Share symptoms in Hindi. Give your doctor a clearer health story.
               </p>
               <div className="mt-8 grid grid-cols-3 gap-3 text-center text-xs">
-                {["Web", "API", "Database"].map((item) => (
+                {["Conversation", "Intake", "Doctor review"].map((item) => (
                   <div
                     key={item}
                     className="rounded-xl border border-white/15 bg-white/5 px-2 py-4"

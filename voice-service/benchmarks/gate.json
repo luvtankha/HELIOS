@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "requiredScenarioIds": [
+    "H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08",
+    "H09", "H10", "H11", "H12", "H13", "H14", "H15"
+  ],
+  "thresholds": {
+    "maxTimeToFirstAudioMsP95": 1500,
+    "maxGenerationCancelMsP95": 350,
+    "maxStaleAudioAfterCancelMsP95": 250,
+    "maxLanguageDriftCount": 0,
+    "maxHinglishCodeSwitchFailures": 0,
+    "maxUnexpectedTurnEndCount": 1,
+    "minSemanticCorrectionSuccessRate": 0.9
+  },
+  "notes": [
+    "Thresholds are engineering acceptance targets, not medical-safety validation.",
+    "Clinical follow-up quality and routing safety are evaluated separately.",
+    "A model cannot pass from documentation/model-card claims alone."
+  ]
+}
+

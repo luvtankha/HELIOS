@@ -9,6 +9,7 @@ export interface BriefEvidence {
     | "PATIENT"
     | "VISIT"
     | "INTERVIEW"
+    | "LIVE_INTAKE_FACT"
     | "SYMPTOM"
     | "MEDICATION"
     | "ALLERGY"
@@ -58,6 +59,15 @@ export interface BriefSectionDraft {
 }
 
 export interface BriefInput {
+  liveFacts?: Array<{
+    id: string;
+    field: string;
+    value: string | null;
+    knowledgeState: string;
+    verificationStatus?: string;
+    verificationVersion?: number;
+    evidenceTurnIds: string[];
+  }>;
   patient: {
     id: string;
     fullName: string;

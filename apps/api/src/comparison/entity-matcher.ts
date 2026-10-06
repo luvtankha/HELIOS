@@ -14,25 +14,27 @@ export class EntityMatcher {
     return [...new Set([...previousGroups.keys(), ...currentGroups.keys()])]
       .sort()
       .map((key) => {
-        const previous = previousGroups.get(key)?.[0];
-        const current = currentGroups.get(key)?.[0];
+        const previous = previousGroups.get(key)?.first;
+        const current = currentGroups.get(key)?.first;
         return {
           key,
           ...(previous && { previous }),
           ...(current && { current }),
           duplicate:
-            (previousGroups.get(key)?.length ?? 0) > 1 ||
-            (currentGroups.get(key)?.length ?? 0) > 1,
+            previousGroups.get(key)?.duplicate === true ||
+            currentGroups.get(key)?.duplicate === true,
         };
       });
   }
 }
 
 function group(facts: SnapshotFact[]) {
-  const map = new Map<string, SnapshotFact[]>();
+  const map = new Map<string, { first: SnapshotFact; duplicate: boolean }>();
   for (const fact of facts) {
     const key = `${fact.entityType}:${fact.entityKey}`;
-    map.set(key, [...(map.get(key) ?? []), fact]);
+    const existing = map.get(key);
+    if (existing) existing.duplicate = true;
+    else map.set(key, { first: fact, duplicate: false });
   }
   return map;
 }

@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: helios-patient-api
+  datasource:
+    url: ${HELIOS_DATABASE_URL:jdbc:postgresql://localhost:5432/helios}
+    username: ${HELIOS_DATABASE_USER:helios}
+    password: ${HELIOS_DATABASE_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        globally_quoted_identifiers: true
+        physical_naming_strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        jdbc:
+          time_zone: UTC
+  flyway:
+    # Phase 3 requires an explicit Prisma -> Flyway handoff before Flyway owns
+    # physical schema changes. Keep the dependency installed but execution off.
+    enabled: ${HELIOS_FLYWAY_ENABLED:false}
+    baseline-on-migrate: ${HELIOS_FLYWAY_BASELINE_ON_MIGRATE:false}
+    baseline-version: ${HELIOS_FLYWAY_BASELINE_VERSION:202609150001}
+    baseline-description: Prisma schema through 202609150001
+
+server:
+  shutdown: graceful
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: helios-patient-api
+
+helios:
+  api:
+    version: v2
+  security:
+    session-token-secret: ${SESSION_TOKEN_SECRET:helios-local-session-secret}
+    patient-session-ttl-seconds: ${PATIENT_SESSION_TTL_SECONDS:28800}
+    allowed-origins: ${HELIOS_ALLOWED_ORIGINS:http://localhost:3000}
+    requests-per-minute: ${HELIOS_REQUESTS_PER_MINUTE:120}
+  voice:
+    runtime-uri: ${HELIOS_VOICE_RUNTIME_URI:http://localhost:9090}
+    public-uri: ${HELIOS_VOICE_PUBLIC_URI:http://localhost:9090}
+    runtime-secret: ${HELIOS_VOICE_RUNTIME_SECRET:}
+    control-secret: ${HELIOS_VOICE_CONTROL_SECRET:}
+    runtime-ticket-ttl-seconds: ${HELIOS_VOICE_RUNTIME_TICKET_TTL_SECONDS:45}
+    require-benchmark-approval: ${HELIOS_VOICE_REQUIRE_BENCHMARK_APPROVAL:true}
+    language-mode: hi-Hinglish

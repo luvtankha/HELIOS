@@ -314,6 +314,7 @@ enum VerificationAction {
 }
 
 enum VerificationFactType {
+  LIVE_INTAKE_FACT
   CLINICAL_HISTORY
   SYMPTOM
   MEDICATION
@@ -406,6 +407,7 @@ model User {
   id                String                    @id @default(cuid())
   email             String?                   @unique
   username          String?                   @unique
+  passwordHash      String?
   displayName       String
   role              UserRole
   status            UserStatus                @default(ACTIVE)
@@ -461,6 +463,7 @@ model PatientProfile {
 
 model PatientSession {
   routingDecisions RoutingDecision[]
+  heliosIntakeFacts HeliosIntakeFact[]
   id                String               @id @default(cuid())
   patientId         String?
   patient           PatientProfile?      @relation(fields: [patientId], references: [id], onDelete: SetNull)
@@ -483,6 +486,29 @@ model PatientSession {
   @@index([patientId, status])
   @@index([status, lastActiveAt])
   @@index([createdAt])
+}
+
+model HeliosIntakeFact {
+  id                        String         @id
+  patientSessionId          String
+  patientSession            PatientSession @relation(fields: [patientSessionId], references: [id], onDelete: Cascade)
+  field                     String         @db.VarChar(96)
+  value                     String?
+  knowledgeState            String         @db.VarChar(32)
+  confidence                String?        @db.VarChar(32)
+  verificationStatus        VerificationStatus @default(PATIENT_REPORTED)
+  verificationVersion       Int            @default(0)
+  source                    String         @db.VarChar(48)
+  evidenceTurnIds           Json
+  model                     String
+  modelVersion              String?
+  conversationPolicyVersion String
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @default(now())
+
+  @@unique([patientSessionId, field], map: "HeliosIntakeFact_patientSessionId_field_key")
+  @@index([patientSessionId, updatedAt], map: "HeliosIntakeFact_session_updated_idx")
+  @@index([patientSessionId, knowledgeState], map: "HeliosIntakeFact_session_state_idx")
 }
 
 model Visit {

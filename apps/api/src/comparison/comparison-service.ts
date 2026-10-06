@@ -12,6 +12,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { env } from "../config/env.js";
 import type { ComparisonRepository } from "../repositories/comparison-repository.js";
 import { DoctorProofService } from "../security/doctor-proof.js";
+import { verifyDoctorPassword } from "../security/doctor-password.js";
 import { AppError } from "../utils/app-error.js";
 import { securityEvent } from "../security/security-events.js";
 import {
@@ -80,31 +81,17 @@ export class ComparisonService implements ComparisonOperations {
     username: string,
     accessCode: string,
   ): Promise<DoctorSessionDto> {
-    if (
-      !env.ENABLE_DEMO_MODE ||
-      !sameSecret(accessCode, env.DOCTOR_DEMO_ACCESS_CODE)
-    ) {
-      securityEvent("AUTHENTICATION_FAILURE", {
-        actorKey: username,
-        routeGroup: "doctor-login",
-      });
-      throw new AppError(
-        "Doctor demo sign-in failed",
-        403,
-        "DOCTOR_SIGN_IN_FAILED",
-      );
-    }
     const doctor = await this.repository.doctorByUsername(username);
-    if (!doctor || doctor.role !== "DOCTOR") {
+    const authenticated = doctor?.passwordHash
+      ? await verifyDoctorPassword(accessCode, doctor.passwordHash)
+      : env.ENABLE_DEMO_MODE &&
+        sameSecret(accessCode, env.DOCTOR_DEMO_ACCESS_CODE);
+    if (!doctor || doctor.role !== "DOCTOR" || !authenticated) {
       securityEvent("AUTHENTICATION_FAILURE", {
         actorKey: username,
         routeGroup: "doctor-login",
       });
-      throw new AppError(
-        "Doctor demo sign-in failed",
-        403,
-        "DOCTOR_SIGN_IN_FAILED",
-      );
+      throw new AppError("Doctor sign-in failed", 403, "DOCTOR_SIGN_IN_FAILED");
     }
     return {
       doctorId: doctor.id,

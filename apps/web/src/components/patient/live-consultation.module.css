@@ -1,0 +1,489 @@
+.page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(
+    ellipse at 50% 20%,
+    #e9f4ff 0%,
+    #c2dcf5 65%,
+    #9cbbdb 100%
+  );
+  color: #0b1967;
+}
+
+.stage {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100dvh;
+  min-height: 620px;
+  overflow: hidden;
+  background: #d3e9ff;
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.hospital {
+  position: absolute;
+  inset: 0;
+  background: #d3e9ff url("/images/consultation/hospital.svg") center / 100% 100%
+    no-repeat;
+  pointer-events: none;
+}
+
+.actorPlacement {
+  position: absolute;
+  left: calc(50% + var(--actor-x));
+  bottom: calc(13% - var(--actor-y));
+  height: 62%;
+  aspect-ratio: 3 / 8;
+  z-index: 1;
+  transform: translateX(-50%) scale(var(--actor-scale));
+  transform-origin: 50% 100%;
+  transition:
+    left 750ms cubic-bezier(0.22, 0.68, 0, 1),
+    bottom 750ms cubic-bezier(0.22, 0.68, 0, 1),
+    transform 750ms cubic-bezier(0.22, 0.68, 0, 1);
+  pointer-events: none;
+}
+
+.actorPlacement[data-foreground="true"] {
+  z-index: 3;
+}
+
+.actor {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 45%;
+  background: transparent;
+  color: #0b1967;
+  cursor: pointer;
+  pointer-events: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.actor:focus-visible {
+  outline: 3px solid #416cee;
+  outline-offset: 3px;
+}
+
+.figure {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform-origin: 50% 98%;
+  animation: actorBreathing 4.6s ease-in-out var(--actor-delay) infinite;
+  filter: saturate(0.88);
+  transition: filter 450ms ease;
+  pointer-events: none;
+}
+
+.figure svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Hit only the painted body parts, so a foreground figure's transparent
+   rectangle never intercepts a visible supporting character. */
+.figure svg [data-part] {
+  pointer-events: visiblePainted;
+  transform-box: view-box;
+}
+
+.actor[data-active="true"] .figure,
+.actor:hover .figure,
+.actor:focus-visible .figure {
+  filter: saturate(1);
+}
+
+.figure [data-part="body"] {
+  transform-origin: 120px 420px;
+  animation: torsoBreathing 4.6s ease-in-out var(--actor-delay) infinite;
+}
+
+.figure [data-part="head"] {
+  transform-origin: 120px 185px;
+  transition: transform 450ms ease;
+}
+
+.figure [data-part="gesture-arm"] {
+  transform-origin: 166px 220px;
+  transform: rotate(32deg);
+  transition: transform 450ms ease;
+}
+
+.figure [data-part="tablet-arm"] {
+  transform-origin: 76px 220px;
+  transition: transform 450ms ease;
+}
+
+.figure [data-part="eyes"] {
+  transform-origin: 120px 130px;
+  animation: blink 6.1s ease-in-out var(--actor-delay) infinite;
+}
+
+.figure [data-part="mouth"] {
+  transform-origin: 122px 161px;
+}
+
+.actor[data-motion="speaking"] .figure [data-part="gesture-arm"] {
+  animation: explainingGesture 2.8s ease-in-out infinite;
+}
+
+.actor[data-motion="speaking"] .figure [data-part="head"] {
+  animation: speakingNod 3.2s ease-in-out infinite;
+}
+
+.actor[data-motion="speaking"] .figure [data-part="mouth"] {
+  animation: speakingMouth 420ms ease-in-out infinite;
+}
+
+.actor[data-motion="listening"] .figure [data-part="head"] {
+  animation: listeningNod 3.6s ease-in-out infinite;
+}
+
+.actor[data-motion="listening"] .figure [data-part="gesture-arm"] {
+  transform: rotate(24deg);
+}
+
+.actor:is(:hover, :focus-visible, [data-inspected="true"])
+  .figure
+  [data-part="tablet-arm"] {
+  transform: rotate(-3deg);
+}
+
+.actor[data-motion="idle"]:is(:hover, :focus-visible, [data-inspected="true"])
+  .figure
+  [data-part="head"] {
+  transform: rotate(-3deg);
+}
+
+.actor[data-motion="idle"]:is(:hover, :focus-visible, [data-inspected="true"])
+  .figure
+  [data-part="gesture-arm"] {
+  transform: rotate(5deg);
+}
+
+.actorShadow {
+  position: absolute;
+  left: 17%;
+  right: 15%;
+  bottom: 1.1%;
+  height: 3%;
+  border-radius: 50%;
+  background: #537fa13d;
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.actorTooltip {
+  position: absolute;
+  top: 36%;
+  left: 50%;
+  z-index: 6;
+  display: grid;
+  gap: 2px;
+  width: 164px;
+  padding: 10px 13px;
+  border: 1px solid #89aeec;
+  border-radius: 15px;
+  background: #fffffff5;
+  color: #132855;
+  box-shadow: 0 7px 22px #244d7933;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    visibility 180ms;
+  pointer-events: none;
+}
+
+.actorTooltip strong {
+  font-size: 16px;
+}
+
+.actor[data-edge="left"] .actorTooltip {
+  left: 74%;
+}
+
+.actor[data-edge="right"] .actorTooltip {
+  left: 26%;
+}
+
+.actor:is(:hover, :focus-visible, [data-inspected="true"]) .actorTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+.actor[data-tooltip-dismissed="true"] .actorTooltip {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.header {
+  position: absolute;
+  top: 5.2%;
+  inset-inline: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 4;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #0b1967;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+}
+
+.brandSymbol {
+  width: 33px;
+  height: 33px;
+}
+
+.bubble {
+  position: absolute;
+  top: 15.5%;
+  left: 55%;
+  transform: translateX(-50%);
+  width: 74%;
+  z-index: 5;
+  border: 1.5px solid #648cff;
+  border-radius: 28px;
+  background: #fff;
+  padding: 18px 22px;
+  box-shadow: 0 3px 18px #6fafff29;
+  font-size: clamp(17px, 4.7vw, 20px);
+  font-weight: 600;
+  line-height: 1.42;
+  text-align: left;
+}
+
+.bubbleText {
+  display: block;
+  max-height: min(13dvh, 112px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  overflow-wrap: anywhere;
+}
+
+.bubbleTail {
+  position: absolute;
+  bottom: -32px;
+  left: 64%;
+  width: 36px;
+  height: 34px;
+  overflow: visible;
+}
+
+.controls {
+  position: absolute;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  inset-inline: 5%;
+  z-index: 10;
+  text-align: center;
+  color: #142656;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.65;
+}
+
+.panel {
+  border: 1px solid #97baff80;
+  border-radius: 23px;
+  padding: 15px 18px;
+  background: #fffffff0;
+  box-shadow: 0 6px 28px #366faa21;
+  backdrop-filter: blur(12px);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin-top: 9px;
+  padding: 9px 22px;
+  border-radius: 999px;
+  background: #153c95;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 3px 10px #153c9526;
+}
+
+.button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.message {
+  border-radius: 18px;
+  background: #fffffff0;
+  padding: 10px 14px;
+}
+.error {
+  color: #942e45;
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.headHalo {
+  position: absolute;
+  top: 5.5%;
+  left: 20%;
+  width: 61%;
+  aspect-ratio: 1;
+  border: 2px solid #ffffffed;
+  border-radius: 50%;
+  box-shadow:
+    0 0 24px 10px #60e5ff55,
+    inset 0 0 22px #8aefff66;
+  opacity: 0;
+  transition: opacity 300ms;
+  pointer-events: none;
+}
+.headHalo::after {
+  content: "";
+  position: absolute;
+  inset: 14%;
+  border-left: 3px solid #fff;
+  border-right: 3px solid #fff;
+  border-radius: 50%;
+}
+.floorHalo {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4.5%;
+  border: 1.5px solid #ffffffeb;
+  border-radius: 50%;
+  box-shadow: 0 0 18px 5px #51dfff45;
+  opacity: 0;
+  transition: opacity 300ms;
+  pointer-events: none;
+}
+.actor[data-motion="listening"] .headHalo,
+.actor[data-motion="listening"] .floorHalo {
+  animation: listen 2.4s ease-in-out infinite;
+}
+
+@keyframes actorBreathing {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+
+@keyframes torsoBreathing {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.003); }
+}
+
+@keyframes blink {
+  0%, 43%, 47%, 100% { transform: scaleY(1); }
+  45% { transform: scaleY(0.1); }
+}
+
+@keyframes explainingGesture {
+  0%, 100% { transform: rotate(4deg); }
+  32% { transform: rotate(-9deg); }
+  64% { transform: rotate(-3deg); }
+  78% { transform: rotate(-7deg); }
+}
+
+@keyframes speakingNod {
+  0%, 100% { transform: rotate(0.5deg); }
+  35% { transform: rotate(-1.7deg); }
+  64% { transform: rotate(1.2deg); }
+}
+
+@keyframes listeningNod {
+  0%, 100% { transform: rotate(-2deg); }
+  45% { transform: rotate(1.3deg) translateY(1px); }
+  68% { transform: rotate(-0.5deg); }
+}
+
+@keyframes speakingMouth {
+  0%, 100% { transform: scale(1, 0.5); }
+  28% { transform: scale(0.94, 1.15); }
+  56% { transform: scale(1, 0.7); }
+  80% { transform: scale(0.97, 1); }
+}
+
+@keyframes listen {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@media (min-width: 481px) {
+  .page {
+    padding: 18px;
+  }
+  .stage {
+    width: 430px;
+    height: min(940px, calc(100dvh - 36px));
+    border: 7px solid #152334;
+    border-radius: 37px;
+    box-shadow: 0 14px 36px #263f6455;
+  }
+  .bubble {
+    font-size: 20px;
+  }
+}
+@media (max-height: 720px) {
+  .bubble {
+    top: 13.5%;
+    font-size: 16px;
+    padding: 14px 18px;
+  }
+  .panel {
+    padding: 11px 14px;
+    font-size: 12px;
+  }
+  .header {
+    top: 3.8%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .actorPlacement,
+  .figure,
+  .actorTooltip,
+  .figure [data-part],
+  .headHalo,
+  .floorHalo {
+    transition: none;
+    animation: none !important;
+  }
+
+  .actor[data-motion="listening"] .headHalo,
+  .actor[data-motion="listening"] .floorHalo {
+    opacity: 0.85;
+  }
+}

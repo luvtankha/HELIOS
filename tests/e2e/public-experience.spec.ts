@@ -1,6 +1,23 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/v2/patient-sessions**", (route) =>
+    route.fulfill({
+      json: {
+        sessionId: "public-ui-synthetic",
+        sessionToken: "synthetic-proof",
+        status: "STARTED",
+        currentStep: "CONSENT",
+        conversationLanguage: "hi-Hinglish",
+        patientId: null,
+        visitId: null,
+        startedAt: "2026-10-04T00:00:00Z",
+      },
+    }),
+  );
+});
+
 test("private PDF preview policy permits local blobs but blocks embedding HELIOS", async ({
   request,
 }) => {
@@ -23,7 +40,7 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await page.goto("/patient");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    const start = page.getByRole("button", { name: /start check-in/i });
+    const start = page.getByRole("button", { name: "हाँ, मैं सहमत हूँ" });
     await expect(start).toBeVisible();
     const box = await start.boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);

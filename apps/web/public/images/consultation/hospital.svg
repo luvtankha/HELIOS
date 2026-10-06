@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="940" viewBox="0 0 430 940" fill="none">
+  <title>HELIOS hospital environment</title>
+  <defs>
+    <linearGradient id="air" x2="0" y2="940" gradientUnits="userSpaceOnUse"><stop stop-color="#f5f8ff"/><stop offset=".44" stop-color="#cce8ff"/><stop offset="1" stop-color="#b4d6f5"/></linearGradient>
+    <linearGradient id="left-wall" x2="200" y2="680" gradientUnits="userSpaceOnUse"><stop stop-color="#a5cdf2"/><stop offset=".58" stop-color="#e1f1ff"/><stop offset="1" stop-color="#a1cbee"/></linearGradient>
+    <linearGradient id="right-wall" x1="430" y1="190" x2="250" y2="645" gradientUnits="userSpaceOnUse"><stop stop-color="#95bfe8"/><stop offset="1" stop-color="#dceffe"/></linearGradient>
+    <linearGradient id="floor" x1="215" y1="586" x2="215" y2="940" gradientUnits="userSpaceOnUse"><stop stop-color="#eef8ff"/><stop offset=".45" stop-color="#d2e7fb"/><stop offset="1" stop-color="#b0cfee"/></linearGradient>
+    <linearGradient id="glass" x1="0" x2="1" y2="1"><stop stop-color="#8fc7ed" stop-opacity=".7"/><stop offset=".55" stop-color="#f3fdff" stop-opacity=".75"/><stop offset="1" stop-color="#86bdf0" stop-opacity=".5"/></linearGradient>
+    <linearGradient id="leaf" x2="1" y2="1"><stop stop-color="#71bdaa"/><stop offset="1" stop-color="#25877f"/></linearGradient>
+    <linearGradient id="pot" x2="1" y2=".3"><stop stop-color="#edf7fb"/><stop offset="1" stop-color="#88b9d9"/></linearGradient>
+    <radialGradient id="light"><stop stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g id="hospital-atmosphere"><path fill="url(#air)" d="M0 0h430v940H0z"/></g>
+  <g id="architecture">
+    <path fill="url(#left-wall)" d="M0 140 170 291v314L0 739Z"/>
+    <path fill="url(#right-wall)" d="m430 145-157 147v314l157 130Z"/>
+    <path fill="#c0e1f7" d="M170 291h103v314H170z"/>
+    <path fill="#e6f6ff" d="M195 363h57v236h-57z"/>
+    <path fill="#a9d1ee" d="M200 370h47v221h-47z"/>
+    <path fill="url(#glass)" d="M205 376h37v204h-37z"/>
+    <path stroke="#f1fbff" stroke-width="3" d="M221 376v204"/>
+    <path fill="#729fbc" d="M235 472h3v22h-3z"/>
+    <path fill="#f2fbff" d="M193 344h60v12h-60z"/>
+    <path fill="#7db6d8" d="M212 347h23v5h-23z"/>
+    <path fill="#d8edfb" d="M0 0h430v155Q215 340 0 155Z"/>
+    <path fill="#eaf4ff" d="M0 0h430v139Q215 296 0 139Z"/>
+    <path fill="#f7f9ff" d="M0 0h430v89Q215 174 0 89Z"/>
+    <path fill="#c6e0f7" d="M0 190 170 312v14L0 210ZM430 192 273 313v14l157-116Z"/>
+    <path fill="#f0f9ff" d="m0 598 170-5v15L0 740ZM430 597l-157-4v15l157 132Z"/>
+  </g>
+  <g id="glazed-consultation-rooms">
+    <path fill="url(#glass)" stroke="#91c7e9" stroke-width="5" d="m20 235 107 73v287L20 652Z"/>
+    <path fill="url(#glass)" stroke="#9dcee9" stroke-width="4" d="m124 324 33 24v242l-33 18Z"/>
+    <path stroke="#f3fbff" stroke-width="4" d="m28 251 27 19v348l-27 14M64 275l31 21v306l-31 19"/>
+    <path stroke="#83b9e0" stroke-width="5" d="M61 270v362M20 444l87-12"/>
+    <path stroke="#fff" stroke-opacity=".6" stroke-width="12" d="m35 347 62-8m-67 38 68-9m-67 165 64-9"/>
+    <path fill="url(#glass)" stroke="#91badb" stroke-width="5" d="m342 288 71-55v420l-71-48Z"/>
+    <path stroke="#e7f6ff" stroke-width="4" d="m354 297 47-36v369l-47-32Z"/>
+    <path stroke="#92c2e6" stroke-width="4" d="m350 440 54 5M378 277v337"/>
+    <path fill="#77b4db" d="M353 458h4v30h-4z"/>
+    <path fill="#cae8f8" d="m9 402 96-4v7l-96 7Z"/>
+    <path stroke="#fff" stroke-opacity=".45" stroke-width="15" d="m25 301 20-10m311 41 42-21"/>
+  </g>
+  <g id="ceiling-lights" fill="#fff">
+    <ellipse cx="45" cy="211" rx="24" ry="8" transform="rotate(28 45 211)"/>
+    <ellipse cx="210" cy="252" rx="20" ry="6"/>
+    <ellipse cx="343" cy="238" rx="21" ry="7" transform="rotate(-25 343 238)"/>
+    <ellipse cx="217" cy="309" rx="12" ry="4"/>
+    <path d="m14 156 18 7-2 3-18-7Zm383 12 19-9 2 3-19 9Z"/>
+  </g>
+  <g id="anatomy-wall-poster">
+    <path fill="#8ab9de" d="m281 329 48-22v135l-48 10Z"/>
+    <path fill="#e5f3ff" d="m286 335 38-17v118l-38 9Z"/>
+    <path stroke="#9ac1e6" stroke-width="3" d="m291 343 17-7m-17 12 17-7"/>
+    <path fill="#a6cce9" d="M306 358c11-5 12 10 4 13v5l10 5 4 22-5 2-5-18-3 2 1 24 5 19-5 1-7-19-4 23-5 1 4-28 1-17-4 2-5 17-5 1 6-25 10-8v-4c-7 0-7-12 0-15Z"/>
+  </g>
+  <g id="reflective-floor">
+    <path fill="url(#floor)" d="M170 597h103L430 726v214H0V726Z"/>
+    <path fill="#f7fcff" opacity=".55" d="m196 602 8 0-35 338H82ZM239 602h8l154 338H284Z"/>
+    <path stroke="#9ebfdf" stroke-opacity=".45" d="m207 602-25 338m-4-337L0 786m249-183 180 218M0 786h430M0 869h430M0 729h430M82 940l112-337m64 0 91 337"/>
+    <path stroke="#fff" stroke-opacity=".75" stroke-width="3" d="M0 744h430M0 875h430m-309 65 80-337m68 0 130 337"/>
+    <path fill="#fff" opacity=".28" d="m16 761 141-65-16 53L0 833Zm295 15 119 87v-51l-131-84Z"/>
+    <ellipse fill="url(#light)" cx="213" cy="710" rx="173" ry="66"/>
+  </g>
+  <g id="left-planter">
+    <path stroke="#469d92" stroke-width="4" d="m33 533 2-183m0 87-27-26m27 64 26-42"/>
+    <g fill="url(#leaf)">
+      <path d="M34 425C6 418 1 391 7 382c15 9 29 23 27 43ZM35 400c-14-21-21-47-10-64 14 20 19 39 10 64ZM35 419c4-30 15-42 34-43-4 21-16 36-34 43ZM35 459c-21-3-36-17-35-34 17 4 30 15 35 34ZM36 464c7-24 20-32 39-26-9 18-23 27-39 26ZM34 490C8 482 1 468 3 455c18 4 28 16 31 35ZM34 381c2-28 14-46 29-44 0 22-9 39-29 44Z"/>
+    </g>
+    <ellipse fill="#d4e9f6" cx="35" cy="528" rx="29" ry="10"/>
+    <path fill="url(#pot)" d="M6 528q29 14 58 0l-7 62q-20 13-44 0Z"/>
+    <path fill="#68a7b7" opacity=".3" d="M12 535v49q15 10 32 7l-8-49Z"/>
+  </g>
+  <g id="foreground-plants">
+    <path stroke="#489a91" stroke-width="4" d="M415 920v-94m0 42-21-41"/>
+    <g fill="url(#leaf)" opacity=".85">
+      <path d="M413 867c-23-5-37-21-32-38 20 1 31 15 32 38ZM414 854c-7-28-3-43 12-52 10 19 5 37-12 52ZM416 887c7-26 20-36 34-31-4 17-15 28-34 31ZM414 909c-29-6-44-24-39-37 24 6 36 16 39 37Z"/>
+    </g>
+    <path fill="url(#pot)" d="M390 916h50l-7 24h-38Z"/>
+    <path stroke="#479f99" stroke-width="3" d="M9 828v-76"/>
+    <path fill="url(#leaf)" opacity=".65" d="M9 785C-4 766-4 748 5 737c13 17 14 34 4 48Zm0 13c5-26 15-37 34-34-6 20-17 31-34 34Zm2 14c-15-22-27-28-39-17 13 15 25 19 39 17Z"/>
+    <path fill="url(#pot)" d="M-9 820h35l-5 45H-3Z"/>
+  </g>
+  <path fill="url(#light)" d="M0 0h430v940H0z" opacity=".16"/>
+</svg>

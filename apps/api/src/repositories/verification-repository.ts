@@ -64,6 +64,7 @@ export class VerificationRepository {
   async listFacts(
     patientId?: string,
     patientIds?: string[],
+    factId?: string,
   ): Promise<ReviewableFact[]> {
     requireDatabase();
     const patientWhere = patientId
@@ -80,9 +81,10 @@ export class VerificationRepository {
       histories,
       responses,
       ayushRecords,
+      liveFacts,
     ] = await Promise.all([
       this.prisma.medication.findMany({
-        where: patientWhere,
+        where: { ...patientWhere, ...(factId && { id: factId }) },
         include: {
           patient: { select: patientSelect },
           visit: { select: { startedAt: true } },
@@ -90,7 +92,7 @@ export class VerificationRepository {
         take: 200,
       }),
       this.prisma.allergy.findMany({
-        where: patientWhere,
+        where: { ...patientWhere, ...(factId && { id: factId }) },
         include: {
           patient: { select: patientSelect },
           visit: { select: { startedAt: true } },
@@ -98,7 +100,7 @@ export class VerificationRepository {
         take: 200,
       }),
       this.prisma.observation.findMany({
-        where: patientWhere,
+        where: { ...patientWhere, ...(factId && { id: factId }) },
         include: {
           patient: { select: patientSelect },
           visit: { select: { startedAt: true } },
@@ -106,7 +108,11 @@ export class VerificationRepository {
         take: 200,
       }),
       this.prisma.documentFact.findMany({
-        where: { ...patientWhere, factType: { not: "ayush_treatment" } },
+        where: {
+          ...patientWhere,
+          ...(factId && { id: factId }),
+          factType: { not: "ayush_treatment" },
+        },
         include: {
           patient: { select: patientSelect },
           visit: { select: { startedAt: true } },
@@ -118,19 +124,28 @@ export class VerificationRepository {
         take: 200,
       }),
       this.prisma.symptom.findMany({
-        where: Object.keys(patientWhere).length ? { visit: patientWhere } : {},
+        where: {
+          ...(Object.keys(patientWhere).length && { visit: patientWhere }),
+          ...(factId && { id: factId }),
+        },
         include: { visit: { include: { patient: { select: patientSelect } } } },
         take: 200,
       }),
       this.prisma.clinicalHistory.findMany({
-        where: Object.keys(patientWhere).length ? { visit: patientWhere } : {},
+        where: {
+          ...(Object.keys(patientWhere).length && { visit: patientWhere }),
+          ...(factId && { id: factId }),
+        },
         include: { visit: { include: { patient: { select: patientSelect } } } },
         take: 200,
       }),
       this.prisma.interviewResponse.findMany({
-        where: Object.keys(patientWhere).length
-          ? { interview: { visit: patientWhere } }
-          : {},
+        where: {
+          ...(Object.keys(patientWhere).length && {
+            interview: { visit: patientWhere },
+          }),
+          ...(factId && { id: factId }),
+        },
         include: {
           interview: {
             include: {
@@ -141,7 +156,7 @@ export class VerificationRepository {
         take: 200,
       }),
       this.prisma.ayushRecord.findMany({
-        where: patientWhere,
+        where: { ...patientWhere, ...(factId && { id: factId }) },
         include: {
           patient: { select: patientSelect },
           visit: { select: { startedAt: true } },
@@ -162,9 +177,58 @@ export class VerificationRepository {
         },
         take: 200,
       }),
+      this.prisma.heliosIntakeFact.findMany({
+        where: {
+          ...(factId && { id: factId }),
+          patientSession: {
+            ...patientWhere,
+            patientId: patientWhere.patientId ?? { not: null },
+          },
+        },
+        include: {
+          patientSession: {
+            include: {
+              patient: { select: patientSelect },
+              visit: { select: { id: true, startedAt: true } },
+            },
+          },
+        },
+        orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
+        take: 200,
+      }),
     ]);
 
     return [
+      ...liveFacts.flatMap((row): ReviewableFact[] => {
+        const session = row.patientSession;
+        if (!session.patient) return [];
+        const evidenceTurns = Array.isArray(row.evidenceTurnIds)
+          ? row.evidenceTurnIds.filter(
+              (id): id is string => typeof id === "string",
+            )
+          : [];
+        return [
+          {
+            ...base(
+              { ...row, source: "PATIENT_REPORTED", visitId: session.visitId },
+              session.patient,
+              session.visit?.startedAt,
+            ),
+            factType: "LIVE_INTAKE_FACT",
+            label: human(row.field.replace(/([a-z])([A-Z])/g, "$1 $2")),
+            value: { value: row.value, knowledgeState: row.knowledgeState },
+            normalizedKey: row.field,
+            evidence: evidenceTurns.map((turnId) => ({
+              kind: "VOICE",
+              sourceId: turnId,
+              label: "Native voice intake turn",
+              language: session.language,
+              sourceText: `Recorded ${row.field}: ${row.value ?? row.knowledgeState}`,
+              occurredAt: row.createdAt,
+            })),
+          },
+        ];
+      }),
       ...medications.map((row) => ({
         ...base(row, row.patient, row.visit?.startedAt),
         factType: "MEDICATION" as const,
@@ -405,7 +469,21 @@ export class VerificationRepository {
         where: { idempotencyKey: input.idempotencyKey },
         include: { verifier: { select: { displayName: true } } },
       });
-      if (replay) return { row: replay, replayed: true };
+      if (replay) {
+        if (
+          replay.factType !== input.factType ||
+          replay.factId !== input.factId ||
+          replay.patientId !== input.patientId ||
+          replay.action !== input.action ||
+          replay.verifiedBy !== input.doctorId
+        )
+          throw new AppError(
+            "This idempotency key was already used for another action",
+            409,
+            "IDEMPOTENCY_KEY_REUSED",
+          );
+        return { row: replay, replayed: true };
+      }
 
       const nextStatus = statusFor(input.action);
       const verifiedValue = input.correctedValue ?? fact.value;
@@ -626,6 +704,26 @@ async function updateFact(
     verificationVersion: input.expectedVersion,
   };
   const correction = input.correctedValue ?? {};
+  if (input.factType === "LIVE_INTAKE_FACT") {
+    const result = await tx.heliosIntakeFact.updateMany({
+      where: {
+        id: input.factId,
+        patientSession: { patientId: input.patientId },
+        verificationVersion: input.expectedVersion,
+      },
+      data: {
+        ...common,
+        updatedAt: new Date(),
+        ...(input.action === "CORRECT"
+          ? {
+              value: correction.value as string | null,
+              knowledgeState: correction.knowledgeState as string,
+            }
+          : {}),
+      },
+    });
+    return result.count === 1;
+  }
   if (input.factType === "MEDICATION") {
     const result = await tx.medication.updateMany({
       where,

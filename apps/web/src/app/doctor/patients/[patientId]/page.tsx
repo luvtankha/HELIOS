@@ -7,10 +7,18 @@ import type {
 } from "@helios/shared";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import {
+  FormEvent,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useDoctorAuth } from "@/providers/doctor-auth-provider";
 import { doctorDashboardApi } from "@/services/doctor-dashboard";
 import { verificationApi } from "@/services/verification";
+import { LiveIntakePanel } from "@/components/doctor/live-intake-panel";
 
 const tabs = [
   "Clinical Brief",
@@ -153,6 +161,23 @@ function DoctorPatientWorkspaceContent() {
             ))}
           </div>
         </section>
+        {workspace.liveIntake && (
+          <LiveIntakePanel intake={workspace.liveIntake} />
+        )}
+        {workspace.routing && (
+          <section
+            className={`mt-4 rounded-2xl border p-4 ${workspace.routing.emergency ? "border-red-200 bg-red-50" : "border-teal-200 bg-teal-50"}`}
+          >
+            <h2 className="font-bold">
+              Routed department:{" "}
+              {workspace.routing.specialization.replaceAll("-", " ")}
+            </h2>
+            <p className="mt-1 text-sm">{workspace.routing.reason}</p>
+            <p className="mt-2 text-xs font-bold">
+              Routing support · clinician review required
+            </p>
+          </section>
+        )}
         <div className="mt-4 flex flex-wrap gap-3">
           <Link
             href="/doctor/verification"
@@ -188,7 +213,7 @@ function DoctorPatientWorkspaceContent() {
                 aria-selected={tab === item}
                 onClick={() => setTab(item)}
                 aria-controls="patient-clinical-panel"
-                className={`min-h-12 border-b-2 px-4 text-sm font-bold ${tab === item ? "border-teal-600 text-teal-800" : "border-transparent text-slate-500"}`}
+                className={`min-h-12 border-b-2 px-4 text-sm font-bold ${tab === item ? "border-teal-600 text-teal-800" : "border-transparent text-slate-600"}`}
               >
                 {item}
               </button>

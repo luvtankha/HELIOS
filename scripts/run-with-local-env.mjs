@@ -5,7 +5,10 @@ import { resolve } from "node:path";
 const allowed = new Set([
   "routing:seed:direct",
   "dev:services",
+  "dev:v2:services",
+  "local:doctor:direct",
   "start:services",
+  "start:v2:services",
   "db:migrate:direct",
   "db:check:direct",
 ]);

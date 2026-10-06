@@ -368,6 +368,7 @@ export interface BriefEvidenceReferenceDto {
     | "PATIENT"
     | "VISIT"
     | "INTERVIEW"
+    | "LIVE_INTAKE_FACT"
     | "SYMPTOM"
     | "MEDICATION"
     | "ALLERGY"
@@ -488,6 +489,7 @@ export type VerificationAction =
   | "SUPERSEDE";
 
 export type VerificationFactType =
+  | "LIVE_INTAKE_FACT"
   | "CLINICAL_HISTORY"
   | "SYMPTOM"
   | "MEDICATION"
@@ -897,10 +899,9 @@ export interface InterviewStateDto {
   /** A new answer awaiting explicit resolution; the confirmed fact is preserved. */
   conflictCandidates?: Record<
     string,
-    Pick<
-      ClinicalFactDto,
-      "value" | "state" | "source" | "confidence"
-    > & { rawAnswer: string }
+    Pick<ClinicalFactDto, "value" | "state" | "source" | "confidence"> & {
+      rawAnswer: string;
+    }
   >;
 }
 
@@ -1047,6 +1048,29 @@ export interface DoctorSafetySignalDto {
   reviewMessage: "Requires clinical review.";
 }
 
+export interface LiveIntakeFactDto {
+  id: string;
+  field: string;
+  value?: string;
+  knowledgeState: "KNOWN" | "UNKNOWN" | "CONFLICT" | "MISSING";
+  confidence?: string;
+  verificationStatus?: ClinicalVerificationStatus;
+  verificationVersion?: number;
+  source: "PATIENT_REPORTED";
+  evidenceTurnIds: string[];
+  model: string;
+  modelVersion?: string;
+  conversationPolicyVersion: string;
+  updatedAt: string;
+}
+
+export interface LiveIntakeDto {
+  patientSessionId: string;
+  language: string;
+  status: string;
+  facts: LiveIntakeFactDto[];
+}
+
 export interface DoctorPatientWorkspaceDto {
   doctor: { id: string; displayName: string; role: "DOCTOR" | "ADMIN" };
   patient: {
@@ -1074,6 +1098,8 @@ export interface DoctorPatientWorkspaceDto {
   timeline: TimelineEventDto[];
   verificationHistory: VerificationHistoryDto[];
   notes: DoctorNoteDto[];
+  liveIntake?: LiveIntakeDto;
+  routing?: { specialization: string; reason: string; emergency: boolean };
   aiInsights: {
     label: "AI-STRUCTURED";
     requiresVerification: true;
@@ -1145,4 +1171,10 @@ export interface DoctorQueueDto {
   refreshAfterSeconds: number;
 }
 export * from "./language.js";
-export type { SpecializationDto, RoutingRecommendationDto, RoutingAssessmentDto, RoutingProviderDto, RoutingProviderListDto } from "./routing.js";
+export type {
+  SpecializationDto,
+  RoutingRecommendationDto,
+  RoutingAssessmentDto,
+  RoutingProviderDto,
+  RoutingProviderListDto,
+} from "./routing.js";

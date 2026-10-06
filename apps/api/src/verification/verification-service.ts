@@ -153,7 +153,11 @@ export class VerificationService implements VerificationOperations {
   ) {
     const doctor = await this.authorize(token);
     const key = decodeReviewId(reviewId);
-    const facts = await this.repository.listFacts(patientId);
+    const facts = await this.repository.listFacts(
+      patientId,
+      undefined,
+      key.factId,
+    );
     const fact = facts.find(
       (item) => item.factType === key.factType && item.factId === key.factId,
     );
@@ -164,7 +168,7 @@ export class VerificationService implements VerificationOperations {
         "VERIFICATION_NOT_FOUND",
       );
     await this.requireAssigned(doctor, fact.patientId);
-    return this.review(fact, facts);
+    return this.review(fact, await this.repository.listFacts(fact.patientId));
   }
 
   async act(
@@ -182,7 +186,8 @@ export class VerificationService implements VerificationOperations {
       if (
         replay.factType !== key.factType ||
         replay.factId !== key.factId ||
-        replay.action !== action
+        replay.action !== action ||
+        replay.verifiedBy !== doctor.id
       )
         throw new AppError(
           "This idempotency key was already used for another action",
@@ -193,7 +198,11 @@ export class VerificationService implements VerificationOperations {
       return resultDto(replay, review, false, true);
     }
 
-    const facts = await this.repository.listFacts();
+    const facts = await this.repository.listFacts(
+      undefined,
+      undefined,
+      key.factId,
+    );
     const fact = facts.find(
       (item) => item.factType === key.factType && item.factId === key.factId,
     );
@@ -205,7 +214,8 @@ export class VerificationService implements VerificationOperations {
       );
     await this.requireAssigned(doctor, fact.patientId);
     const context = await this.decorate(
-      facts.filter((item) => item.patientId === fact.patientId),
+      [fact],
+      await this.repository.listFacts(fact.patientId),
     );
     const decorated = context.find(
       (item) =>
@@ -584,6 +594,29 @@ function validateAction(
     );
   if (action === "CORRECT" && fact.factType === "AYUSH_RECORD")
     validateAyushCorrection(input.correctedValue!);
+  if (action === "CORRECT" && fact.factType === "LIVE_INTAKE_FACT") {
+    const correction = input.correctedValue!;
+    if (
+      Object.keys(correction).some(
+        (key) => !["value", "knowledgeState"].includes(key),
+      ) ||
+      !["KNOWN", "UNKNOWN", "CONFLICT", "MISSING"].includes(
+        String(correction.knowledgeState),
+      ) ||
+      !(
+        correction.value === null ||
+        (typeof correction.value === "string" &&
+          correction.value.length <= 4000)
+      ) ||
+      (correction.knowledgeState === "KNOWN" &&
+        (typeof correction.value !== "string" || !correction.value.trim()))
+    )
+      throw new AppError(
+        "Use a value and a valid knowledgeState; a known fact requires a non-empty value.",
+        400,
+        "LIVE_INTAKE_CORRECTION_INVALID",
+      );
+  }
   if (
     ["CORRECT", "REJECT", "KEEP_PREVIOUS", "CONFIRM_CURRENT"].includes(
       action,
@@ -725,6 +758,7 @@ function decodeReviewId(reviewId: string) {
         "DOCUMENT_FACT",
         "INTERVIEW_RESPONSE",
         "AYUSH_RECORD",
+        "LIVE_INTAKE_FACT",
       ].includes(factType)
     )
       throw new Error("invalid");

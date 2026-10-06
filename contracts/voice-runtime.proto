@@ -1,0 +1,165 @@
+syntax = "proto3";
+
+package helios.voice.v2;
+
+option java_multiple_files = true;
+option java_package = "com.helios.patient.voice.grpc";
+
+service VoiceRuntime {
+  rpc Health(HealthRequest) returns (HealthResponse);
+  rpc GetCapabilities(CapabilitiesRequest) returns (CapabilitiesResponse);
+  rpc Conversation(stream RuntimeMessage) returns (stream RuntimeMessage);
+}
+
+message HealthRequest {}
+message CapabilitiesRequest {}
+
+enum RuntimeAvailability {
+  RUNTIME_AVAILABILITY_UNSPECIFIED = 0;
+  RUNTIME_UNAVAILABLE = 1;
+  RUNTIME_DEGRADED = 2;
+  RUNTIME_READY = 3;
+}
+
+message HealthResponse {
+  RuntimeAvailability availability = 1;
+  string detail = 2;
+}
+
+message CapabilitiesResponse {
+  RuntimeAvailability availability = 1;
+  string provider = 2;
+  string model = 3;
+  string model_version = 4;
+  bool full_duplex = 5;
+  bool barge_in = 6;
+  repeated string validated_language_modes = 7;
+  bool benchmark_approved = 8;
+  string detail = 9;
+}
+
+message RuntimeMessage {
+  string voice_session_id = 1;
+  uint64 sequence = 2;
+  string occurred_at = 3;
+
+  oneof body {
+    SessionStart session_start = 10;
+    PolicyContext policy_context = 11;
+    CancelGeneration cancel_generation = 12;
+    SessionEnd session_end = 13;
+    RuntimeReady runtime_ready = 30;
+    PatientTurnBoundary patient_turn_boundary = 31;
+    AssistantTurnStarted assistant_turn_started = 32;
+    AssistantCaptionDelta assistant_caption_delta = 33;
+    AssistantTurnEnded assistant_turn_ended = 34;
+    ClinicalFactCandidate clinical_fact_candidate = 35;
+    MissingInformationState missing_information_state = 36;
+    RedFlagCandidate red_flag_candidate = 37;
+    ConversationCompleteCandidate conversation_complete_candidate = 38;
+    RuntimeMetric runtime_metric = 39;
+    RuntimeError runtime_error = 40;
+  }
+}
+
+message SessionStart {
+  string patient_session_id = 1;
+  string language_mode = 2;
+}
+
+message PolicyContext {
+  string conversation_policy_version = 1;
+  bool diagnosis_allowed = 2;
+  bool prescribing_allowed = 3;
+  bool direct_doctor_assignment_allowed = 4;
+  string selected_follow_up_intent_id = 5;
+  string selected_follow_up_purpose = 6;
+}
+
+message CancelGeneration {
+  string assistant_turn_id = 1;
+  uint64 last_played_audio_sequence = 2;
+}
+
+message SessionEnd { string reason = 1; }
+message RuntimeReady { string runtime_session_id = 1; }
+
+enum Boundary {
+  BOUNDARY_UNSPECIFIED = 0;
+  BOUNDARY_STARTED = 1;
+  BOUNDARY_ENDED = 2;
+}
+
+message PatientTurnBoundary {
+  string turn_id = 1;
+  Boundary boundary = 2;
+}
+
+message AssistantTurnStarted {
+  string turn_id = 1;
+  string doctor_avatar_id = 2;
+}
+
+message AssistantCaptionDelta {
+  string turn_id = 1;
+  string text = 2;
+}
+
+message AssistantTurnEnded {
+  string turn_id = 1;
+  bool cancelled = 2;
+  uint64 final_audio_sequence = 3;
+}
+
+enum KnowledgeState {
+  KNOWLEDGE_STATE_UNSPECIFIED = 0;
+  KNOWN = 1;
+  UNKNOWN = 2;
+  CONFLICT = 3;
+  MISSING = 4;
+}
+
+enum Confidence {
+  CONFIDENCE_UNSPECIFIED = 0;
+  LOW = 1;
+  MEDIUM = 2;
+  HIGH = 3;
+}
+
+message ClinicalFactCandidate {
+  string field = 1;
+  string value = 2;
+  KnowledgeState knowledge_state = 3;
+  Confidence confidence = 4;
+  string source = 5;
+  repeated string evidence_turn_ids = 6;
+  string model = 7;
+  string model_version = 8;
+  string conversation_policy_version = 9;
+}
+
+message MissingInformationState {
+  repeated string missing_fields = 1;
+  repeated string conflicting_fields = 2;
+}
+
+message RedFlagCandidate {
+  string candidate_id = 1;
+  string description = 2;
+  repeated string evidence_turn_ids = 3;
+  Confidence confidence = 4;
+}
+
+message ConversationCompleteCandidate { string reason = 1; }
+
+message RuntimeMetric {
+  string name = 1;
+  double value = 2;
+  string unit = 3;
+}
+
+message RuntimeError {
+  string code = 1;
+  string message = 2;
+  bool retryable = 3;
+}

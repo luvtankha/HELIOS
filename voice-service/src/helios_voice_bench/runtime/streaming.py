@@ -1,0 +1,16 @@
+from __future__ import annotations
+
+from typing import Protocol
+
+from .contracts import SessionPolicy
+
+
+class StreamingVoiceSession(Protocol):
+    def ingest_pcm16(self, frame: bytes) -> bytes | None: ...
+    def queue_question(self, question_id: str, text: str) -> None: ...
+    def barge_in(self) -> None: ...
+    def close(self) -> None: ...
+
+
+class StreamingVoiceRuntime(Protocol):
+    def open_session(self, policy: SessionPolicy) -> StreamingVoiceSession: ...
