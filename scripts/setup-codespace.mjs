@@ -23,6 +23,20 @@ export function codespaceToolPath(
   ].join(delimiter);
 }
 
+export function codespaceToolEnvironment(
+  environment = process.env,
+  userHome = homedir(),
+) {
+  const userTools = {
+    PIPX_HOME: resolve(userHome, ".local/share/pipx"),
+    PIPX_BIN_DIR: resolve(userHome, ".local/bin"),
+  };
+  return {
+    ...userTools,
+    PATH: codespaceToolPath({ ...environment, ...userTools }, userHome),
+  };
+}
+
 export function codespaceUrls(environment = process.env) {
   const name = environment.CODESPACE_NAME;
   const domain = environment.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN;
@@ -145,7 +159,7 @@ export async function configureCodespaceEnvironment() {
 
 export async function setupCodespace() {
   codespaceUrls();
-  process.env.PATH = codespaceToolPath();
+  Object.assign(process.env, codespaceToolEnvironment());
   const manifest = JSON.parse(
     await readFile(resolve(workspaceRoot, "package.json"), "utf8"),
   );

@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { parseEnv } from "node:util";
 import {
   codespaceUrls,
-  codespaceToolPath,
+  codespaceToolEnvironment,
   configureCodespaceEnvironment,
   workspaceRoot,
 } from "./setup-codespace.mjs";
@@ -56,7 +56,7 @@ async function removeOwnPid() {
 }
 
 async function supervise() {
-  process.env.PATH = codespaceToolPath();
+  Object.assign(process.env, codespaceToolEnvironment());
   process.chdir(workspaceRoot);
   await configureCodespaceEnvironment();
   process.loadEnvFile(resolve(workspaceRoot, ".env"));
@@ -128,7 +128,7 @@ async function supervise() {
 
 async function main() {
   const urls = codespaceUrls();
-  process.env.PATH = codespaceToolPath();
+  Object.assign(process.env, codespaceToolEnvironment());
   if (process.platform !== "linux")
     throw new Error("The Codespaces supervisor requires Linux process groups.");
   const existing = await currentRuntime();
