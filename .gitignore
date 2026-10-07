@@ -6,6 +6,7 @@
 !.env.v2.example
 /.local/
 node_modules/
+.pnpm-store/
 .next/
 dist/
 coverage/
