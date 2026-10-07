@@ -148,7 +148,9 @@ The setup/start scripts configure the current codespace's browser-facing URLs ra
 
 Forward application ports **3000, 8080 and 9090**. For a public demonstration, these three forwarded ports must be accessible to the browser using the published web URL; set their visibility to **Public** in the Codespaces Ports panel when sharing without GitHub authentication. Keep the database port private and unforwarded. GitHub documents port visibility and the forwarded URL format in [Forwarding ports in your codespace](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace).
 
-If a public port returns a gateway error even though its local health check passes, stop forwarding that port and add **`0.0.0.0:3000`**, **`0.0.0.0:8080`** or **`0.0.0.0:9090`** in the Ports panel, then set the replacement to Public. This fixed forwarding in the hosted demo. Keep the numeric `forwardPorts` entries in `.devcontainer/devcontainer.json`; Codespaces does not support the `host:port` variation in that configuration.
+Check visibility again after resuming: the hosted demo's ports returned to Private on restart and needed to be set back to Public. The services start automatically through `postStartCommand`; allow Java to finish starting before checking the patient link.
+
+If a public port returns a gateway error even though its local health check passes, stop forwarding that port and add **`0.0.0.0:3000`**, **`0.0.0.0:8080`** or **`0.0.0.0:9090`** in the Ports panel, then set the replacement to Public. This fixed forwarding in the hosted demo. Keep the numeric `forwardPorts` entries in `.devcontainer/devcontainer.json`; [Codespaces does not support the `host:port` variation in that configuration](https://github.com/devcontainers/spec/blob/main/docs/specs/supporting-tools.md).
 
 The patient URL has this form:
 
