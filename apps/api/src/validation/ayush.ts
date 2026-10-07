@@ -1,14 +1,11 @@
 import { z } from "zod";
-
 const id = z.string().trim().min(1).max(256);
 const optionalText = z.string().trim().min(1).max(500).optional();
 const date = z
   .string()
   .refine((value) => !Number.isNaN(Date.parse(value)), "Invalid date")
   .optional();
-
 export const ayushPatientParamsSchema = z.object({ patientId: id });
-export const ayushRecordParamsSchema = z.object({ recordId: id });
 export const ayushInputSchema = z
   .object({
     visitId: id.optional(),
@@ -44,8 +41,8 @@ export const ayushInputSchema = z
     patientReportedReason: optionalText,
     reportedEffect: optionalText,
     reportedEffectOnset: date,
-    originalStatement: z.string().trim().min(1).max(4_000).optional(),
-    notes: z.string().trim().min(1).max(2_000).optional(),
+    originalStatement: z.string().trim().min(1).max(4000).optional(),
+    notes: z.string().trim().min(1).max(2000).optional(),
   })
   .strict()
   .superRefine((value, context) => {
@@ -66,11 +63,3 @@ export const ayushInputSchema = z
         message: "End date cannot be before start date",
       });
   });
-
-export const doctorAyushInputSchema = ayushInputSchema.and(
-  z.object({
-    source: z
-      .enum(["DOCTOR_ENTERED", "AYUSH_PRACTITIONER_DOCUMENTED"])
-      .optional(),
-  }),
-);

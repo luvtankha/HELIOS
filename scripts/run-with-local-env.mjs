@@ -6,7 +6,7 @@ const allowed = new Set([
   "routing:seed:direct",
   "dev:services",
   "dev:v2:services",
-  "local:doctor:direct",
+  "test:e2e:connected:direct",
   "start:services",
   "start:v2:services",
   "db:migrate:direct",

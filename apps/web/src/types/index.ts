@@ -1,1 +1,1 @@
-export type EntryRole = "patient" | "doctor";
+export type EntryRole = "patient";

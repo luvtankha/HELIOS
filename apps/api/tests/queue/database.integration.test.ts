@@ -2,20 +2,16 @@ import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { QueueRepository } from "../../src/queue/queue-repository.js";
 import { QueueService } from "../../src/queue/queue-service.js";
-import { DoctorProofService } from "../../src/security/doctor-proof.js";
 import { SessionProofService } from "../../src/security/session-proof.js";
-
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 const integration = describe.skipIf(!testDatabaseUrl);
 const secret = "phase-fourteen-database-integration-secret";
 let prisma: PrismaClient;
 let service: QueueService;
 let doctorId = "";
-let doctorToken = "";
 const patientIds: string[] = [];
 const sessionIds: string[] = [];
 const visitIds: string[] = [];
-
 integration("PostgreSQL queue transaction integration", () => {
   beforeAll(async () => {
     process.env.DATABASE_URL = testDatabaseUrl;
@@ -29,11 +25,9 @@ integration("PostgreSQL queue transaction integration", () => {
       },
     });
     doctorId = doctor.id;
-    doctorToken = new DoctorProofService(secret).create(doctorId);
     service = new QueueService(
       new QueueRepository(prisma),
       new SessionProofService(secret),
-      new DoctorProofService(secret),
     );
     for (const index of [1, 2]) {
       const patient = await prisma.patientProfile.create({
@@ -68,7 +62,6 @@ integration("PostgreSQL queue transaction integration", () => {
       sessionIds.push(session.id);
     }
   });
-
   afterAll(async () => {
     if (!prisma) return;
     const entries = await prisma.queueEntry.findMany({
@@ -104,7 +97,6 @@ integration("PostgreSQL queue transaction integration", () => {
     }
     await prisma.$disconnect();
   });
-
   it("creates one token per visit under retry and unique constraints", async () => {
     const proof = new SessionProofService(secret);
     const token = proof.create(sessionIds[0]!);
@@ -117,7 +109,6 @@ integration("PostgreSQL queue transaction integration", () => {
       await prisma.queueEntry.count({ where: { visitId: visitIds[0] } }),
     ).toBe(1);
   });
-
   it("allocates distinct daily sequences to concurrent patients", async () => {
     const proof = new SessionProofService(secret);
     await Promise.all([
@@ -130,23 +121,5 @@ integration("PostgreSQL queue transaction integration", () => {
     });
     expect(new Set(entries.map((entry) => entry.sequence)).size).toBe(2);
     expect(new Set(entries.map((entry) => entry.tokenNumber)).size).toBe(2);
-  });
-
-  it("lets concurrent Call Next requests produce one called transition and audit", async () => {
-    const [first, second] = await Promise.all([
-      service.callNext(doctorToken),
-      service.callNext(doctorToken),
-    ]);
-    expect(first.id).toBe(second.id);
-    expect(
-      await prisma.queueEntry.count({
-        where: { visitId: { in: visitIds }, status: "CALLED" },
-      }),
-    ).toBe(1);
-    expect(
-      await prisma.auditLog.count({
-        where: { entityId: first.id, action: "TOKEN_CALLED" },
-      }),
-    ).toBe(1);
   });
 });

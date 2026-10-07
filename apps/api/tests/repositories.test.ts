@@ -6,13 +6,10 @@ import { ObservationRepository } from "../src/repositories/observation-repositor
 import { PatientRepository } from "../src/repositories/patient-repository.js";
 import { SessionRepository } from "../src/repositories/session-repository.js";
 import { TimelineRepository } from "../src/repositories/timeline-repository.js";
-import { VerificationRepository } from "../src/repositories/verification-repository.js";
 import { VisitRepository } from "../src/repositories/visit-repository.js";
-
 function prismaWith(delegate: Record<string, unknown>) {
   return delegate as unknown as PrismaClient;
 }
-
 describe("Prisma repositories", () => {
   it("creates a patient with an explicit DTO boundary", async () => {
     const create = vi.fn(async ({ data }) => data);
@@ -30,7 +27,6 @@ describe("Prisma repositories", () => {
       data: expect.objectContaining({ patientCode: "DEMO-1" }),
     });
   });
-
   it("creates a persistent session", async () => {
     const create = vi.fn(async ({ data }) => ({ id: "session", ...data }));
     const repository = new SessionRepository(
@@ -41,7 +37,6 @@ describe("Prisma repositories", () => {
       data: { language: "hi", currentStep: "LANGUAGE" },
     });
   });
-
   it("creates a visit", async () => {
     const create = vi.fn(async ({ data }) => data);
     const repository = new VisitRepository(prismaWith({ visit: { create } }));
@@ -54,7 +49,6 @@ describe("Prisma repositories", () => {
       },
     });
   });
-
   it("upserts clinical history", async () => {
     const upsert = vi.fn(async (input) => input);
     const repository = new ClinicalHistoryRepository(
@@ -67,7 +61,6 @@ describe("Prisma repositories", () => {
       expect.objectContaining({ where: { visitId: "visit-1" } }),
     );
   });
-
   it("upserts consent by version", async () => {
     const upsert = vi.fn(async () => ({ id: "consent" }));
     const repository = new ConsentRepository(
@@ -81,7 +74,6 @@ describe("Prisma repositories", () => {
     });
     expect(upsert).toHaveBeenCalledOnce();
   });
-
   it("creates a timeline event", async () => {
     const create = vi.fn(async ({ data }) => data);
     const repository = new TimelineRepository(
@@ -96,7 +88,6 @@ describe("Prisma repositories", () => {
     });
     expect(create).toHaveBeenCalledOnce();
   });
-
   it("creates and retrieves typed observations without losing provenance", async () => {
     const create = vi.fn(async ({ data }) => data);
     const findMany = vi.fn(async () => []);
@@ -123,34 +114,6 @@ describe("Prisma repositories", () => {
     expect(findMany).toHaveBeenCalledWith({
       where: { patientId: "patient-1" },
       orderBy: [{ effectiveAt: "desc" }, { createdAt: "desc" }],
-    });
-  });
-
-  it("creates a doctor verification without collapsing provenance", async () => {
-    const create = vi.fn(async ({ data }) => data);
-    const repository = new VerificationRepository(
-      prismaWith({ doctorVerification: { create } }),
-    );
-    await repository.create({
-      patientId: "patient-1",
-      visitId: "visit-1",
-      factType: "SYMPTOM",
-      factId: "symptom-1",
-      action: "VERIFY",
-      previousStatus: "PATIENT_REPORTED",
-      newStatus: "DOCTOR_VERIFIED",
-      originalValue: { source: "PATIENT_REPORTED" },
-      verifiedValue: { source: "DOCTOR_VERIFIED" },
-      status: "DOCTOR_VERIFIED",
-      sourceType: "PATIENT_REPORTED",
-      evidenceReferences: [],
-      verifiedBy: "doctor-1",
-      verifiedAt: new Date(),
-      factVersion: 1,
-      idempotencyKey: "00000000-0000-4000-8000-000000000099",
-    });
-    expect(create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ status: "DOCTOR_VERIFIED" }),
     });
   });
 });

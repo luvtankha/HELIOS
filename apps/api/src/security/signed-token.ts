@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-type TokenKind = "patient-session" | "doctor-session";
+type TokenKind = "patient-session";
 type TokenPayload = { sub: string; kind: TokenKind; iat: number; exp: number };
 
 export class SignedTokenCodec {

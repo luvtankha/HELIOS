@@ -1,6 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { requireDatabase } from "./database.js";
-
 export const ayushInclude = {
   document: { select: { id: true, fileName: true, documentDate: true } },
   documentFact: {
@@ -15,35 +14,11 @@ export const ayushInclude = {
     },
   },
 } satisfies Prisma.AyushRecordInclude;
-
 export type AyushRecordWithEvidence = Prisma.AyushRecordGetPayload<{
   include: typeof ayushInclude;
 }>;
-
 export class AyushRepository {
   constructor(private readonly prisma: PrismaClient) {}
-
-  async activeDoctor(id: string) {
-    requireDatabase();
-    return this.prisma.user.findFirst({
-      where: { id, role: { in: ["DOCTOR", "ADMIN"] }, status: "ACTIVE" },
-      select: { id: true, displayName: true, role: true },
-    });
-  }
-
-  async assigned(doctorId: string, patientId: string, isAdmin: boolean) {
-    requireDatabase();
-    if (isAdmin) return true;
-    return Boolean(
-      (
-        await this.prisma.doctorPatientAssignment.findUnique({
-          where: { doctorId_patientId: { doctorId, patientId } },
-          select: { active: true },
-        })
-      )?.active,
-    );
-  }
-
   async sessionOwns(patientId: string, sessionId: string) {
     requireDatabase();
     return this.prisma.patientSession.findFirst({
@@ -51,7 +26,6 @@ export class AyushRepository {
       select: { id: true, visitId: true },
     });
   }
-
   async patientView(patientId: string) {
     requireDatabase();
     return this.prisma.patientProfile.findUnique({
@@ -86,18 +60,13 @@ export class AyushRepository {
       },
     });
   }
-
-  async find(id: string) {
-    requireDatabase();
-    return this.prisma.ayushRecord.findUnique({
-      where: { id },
-      include: ayushInclude,
-    });
-  }
-
   async create(
     data: Prisma.AyushRecordUncheckedCreateInput,
-    audit: { actorUserId?: string; action: string; requestId?: string },
+    audit: {
+      actorUserId?: string;
+      action: string;
+      requestId?: string;
+    },
   ) {
     requireDatabase();
     return this.prisma.$transaction(async (transaction) => {
@@ -138,7 +107,6 @@ export class AyushRepository {
       return record;
     });
   }
-
   async upsertInterview(data: Prisma.AyushRecordUncheckedCreateInput) {
     requireDatabase();
     if (!data.interviewId) throw new Error("Interview identity is required");
@@ -178,7 +146,6 @@ export class AyushRepository {
       include: ayushInclude,
     });
   }
-
   async documentContext(documentId: string) {
     requireDatabase();
     return this.prisma.medicalDocument.findFirst({
@@ -195,7 +162,6 @@ export class AyushRepository {
       },
     });
   }
-
   async upsertDocument(data: Prisma.AyushRecordUncheckedCreateInput) {
     requireDatabase();
     if (!data.documentFactId)
@@ -253,7 +219,6 @@ export class AyushRepository {
       return record;
     });
   }
-
   async supersedeMissingDocumentRecords(documentId: string, factIds: string[]) {
     requireDatabase();
     return this.prisma.$transaction(async (transaction) => {
@@ -294,7 +259,6 @@ export class AyushRepository {
       return result;
     });
   }
-
   async patientIdForDocument(documentId: string) {
     requireDatabase();
     const record = await this.prisma.ayushRecord.findFirst({
@@ -304,7 +268,6 @@ export class AyushRepository {
     return record?.patientId ?? null;
   }
 }
-
 async function staleDependents(
   transaction: Prisma.TransactionClient,
   patientId: string,

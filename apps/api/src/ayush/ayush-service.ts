@@ -5,12 +5,9 @@ import type {
   AyushRecordWithEvidence,
 } from "../repositories/ayush-repository.js";
 import type { TimelineRebuildService } from "../timeline/timeline-rebuild-service.js";
-import type { DoctorProofService } from "../security/doctor-proof.js";
 import type { SessionProofService } from "../security/session-proof.js";
 import { AppError } from "../utils/app-error.js";
 import { AyushNormalizer } from "./ayush-normalizer.js";
-import { securityEvent } from "../security/security-events.js";
-
 export interface AyushInput {
   visitId?: string | undefined;
   system?: string | undefined;
@@ -35,68 +32,33 @@ export interface AyushInput {
   notes?: string | undefined;
   source?: "DOCTOR_ENTERED" | "AYUSH_PRACTITIONER_DOCUMENTED" | undefined;
 }
-
 export interface AyushOperations {
   patientView(
     patientId: string,
     sessionToken?: string,
   ): Promise<AyushPatientViewDto>;
-  doctorView(
-    patientId: string,
-    doctorToken?: string,
-  ): Promise<AyushPatientViewDto>;
-  detail(recordId: string, doctorToken?: string): Promise<AyushRecordDto>;
   report(
     patientId: string,
     input: AyushInput,
     sessionToken?: string,
     requestId?: string,
   ): Promise<AyushRecordDto>;
-  enter(
-    patientId: string,
-    input: AyushInput,
-    doctorToken?: string,
-    requestId?: string,
-  ): Promise<AyushRecordDto>;
   projectDocument(documentId: string): Promise<void>;
   removeDocument(documentId: string): Promise<void>;
 }
-
 export class AyushService implements AyushOperations {
   constructor(
     private readonly repository: AyushRepository,
     private readonly timeline: TimelineRebuildService,
     private readonly patientProof: SessionProofService,
-    private readonly doctorProof: DoctorProofService,
     private readonly normalizer = new AyushNormalizer(),
   ) {}
-
   async patientView(patientId: string, token?: string) {
     const sessionId = this.patientProof.verify(token);
     if (!(await this.repository.sessionOwns(patientId, sessionId)))
       this.patientDenied();
     return this.view(patientId);
   }
-
-  async doctorView(patientId: string, token?: string) {
-    const doctor = await this.doctor(token);
-    await this.requireAssigned(doctor, patientId);
-    return this.view(patientId);
-  }
-
-  async detail(recordId: string, token?: string) {
-    const doctor = await this.doctor(token);
-    const record = await this.repository.find(recordId);
-    if (!record)
-      throw new AppError(
-        "AYUSH record not found",
-        404,
-        "AYUSH_RECORD_NOT_FOUND",
-      );
-    await this.requireAssigned(doctor, record.patientId);
-    return serialize(record);
-  }
-
   async report(
     patientId: string,
     input: AyushInput,
@@ -119,27 +81,6 @@ export class AyushService implements AyushOperations {
     await this.refresh(patientId);
     return serialize(record);
   }
-
-  async enter(
-    patientId: string,
-    input: AyushInput,
-    token?: string,
-    requestId?: string,
-  ) {
-    const doctor = await this.doctor(token);
-    await this.requireAssigned(doctor, patientId);
-    const record = await this.repository.create(
-      this.data(patientId, input, input.source ?? "DOCTOR_ENTERED"),
-      {
-        actorUserId: doctor.id,
-        action: "AYUSH_ENTERED",
-        ...(requestId && { requestId }),
-      },
-    );
-    await this.refresh(patientId);
-    return serialize(record);
-  }
-
   async projectDocument(documentId: string) {
     const document = await this.repository.documentContext(documentId);
     if (!document) return;
@@ -200,13 +141,11 @@ export class AyushService implements AyushOperations {
     );
     if (document.facts.length) await this.refresh(document.patientId);
   }
-
   async removeDocument(documentId: string) {
     const patientId = await this.repository.patientIdForDocument(documentId);
     await this.repository.supersedeMissingDocumentRecords(documentId, []);
     if (patientId) await this.refresh(patientId);
   }
-
   private async view(patientId: string): Promise<AyushPatientViewDto> {
     const result = await this.repository.patientView(patientId);
     if (!result)
@@ -249,7 +188,6 @@ export class AyushService implements AyushOperations {
         : "UNAVAILABLE",
     };
   }
-
   private data(
     patientId: string,
     input: AyushInput,
@@ -313,20 +251,6 @@ export class AyushService implements AyushOperations {
       ...(input.notes && { notes: input.notes }),
     };
   }
-
-  private async doctor(token?: string) {
-    const doctor = await this.repository.activeDoctor(
-      this.doctorProof.verify(token),
-    );
-    if (!doctor)
-      throw new AppError(
-        "Doctor access is not active",
-        403,
-        "DOCTOR_NOT_AUTHORIZED",
-      );
-    return doctor;
-  }
-
   private async refresh(patientId: string) {
     try {
       await this.timeline.rebuild(patientId);
@@ -334,30 +258,6 @@ export class AyushService implements AyushOperations {
       /* source mutation remains committed */
     }
   }
-
-  private async requireAssigned(
-    doctor: { id: string; role: string },
-    patientId: string,
-  ) {
-    if (
-      !(await this.repository.assigned(
-        doctor.id,
-        patientId,
-        doctor.role === "ADMIN",
-      ))
-    ) {
-      securityEvent("AUTHORIZATION_FAILURE", {
-        actorKey: doctor.id,
-        routeGroup: "ayush",
-      });
-      throw new AppError(
-        "Patient access is not authorized",
-        403,
-        "PATIENT_ACCESS_FORBIDDEN",
-      );
-    }
-  }
-
   private patientDenied(): never {
     throw new AppError(
       "AYUSH records are not available for this session",
@@ -366,7 +266,6 @@ export class AyushService implements AyushOperations {
     );
   }
 }
-
 function serialize(record: AyushRecordWithEvidence): AyushRecordDto {
   return {
     id: record.id,
@@ -420,7 +319,6 @@ function serialize(record: AyushRecordWithEvidence): AyushRecordDto {
     updatedAt: record.updatedAt.toISOString(),
   };
 }
-
 function evidence(record: AyushRecordWithEvidence): AyushRecordDto["evidence"] {
   if (record.document && record.documentFact?.evidence.length)
     return record.documentFact.evidence.map((item) => ({
@@ -451,7 +349,6 @@ function evidence(record: AyushRecordWithEvidence): AyushRecordDto["evidence"] {
     : [];
   return parsed as unknown as AyushRecordDto["evidence"];
 }
-
 function clinicalStatus(status: string): AyushRecordDto["verificationStatus"] {
   if (status === "VERIFIED") return "DOCTOR_VERIFIED";
   if (["EDITED", "PARTIALLY_CORRECT"].includes(status))
@@ -460,7 +357,6 @@ function clinicalStatus(status: string): AyushRecordDto["verificationStatus"] {
   if (["PENDING", "MISSED"].includes(status)) return "UNREVIEWED";
   return status as AyushRecordDto["verificationStatus"];
 }
-
 function evidenceJson(value: unknown): Prisma.InputJsonValue {
   return value ? [value] : [];
 }

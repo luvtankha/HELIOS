@@ -4,11 +4,9 @@ import type { LanguageOperations } from "../language/language-service.js";
 import { validateBody } from "../validation/middleware.js";
 import {
   detectLanguageSchema,
-  doctorLanguageSchema,
   normalizeLanguageSchema,
   translateSchema,
 } from "../validation/language.js";
-
 export function createLanguageRouter(service: LanguageOperations) {
   const router = Router();
   const controller = new LanguageController(service);
@@ -28,11 +26,6 @@ export function createLanguageRouter(service: LanguageOperations) {
     "/translate",
     validateBody(translateSchema),
     controller.translate,
-  );
-  router.put(
-    "/doctor/language",
-    validateBody(doctorLanguageSchema),
-    controller.doctorLanguage,
   );
   return router;
 }

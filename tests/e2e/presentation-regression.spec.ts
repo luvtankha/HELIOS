@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 
 async function simulatedIntake(page: Page) {
@@ -124,86 +123,5 @@ test("microphone denial gives a usable retry instead of a blank conversation", a
   await page.getByRole("button", { name: "हाँ, मैं सहमत हूँ" }).click();
   await page.getByRole("button", { name: "माइक्रोफ़ोन फिर शुरू करें" }).click();
   await expect(page.getByText("HELIOS आपकी बात सुन रहा है")).toBeAttached();
-  expect(errors).toEqual([]);
-});
-
-test("doctor can review the real native facts and persist verification", async ({
-  page,
-}) => {
-  test.skip(
-    process.env.HELIOS_LIVE_HANDOFF_UI !== "true",
-    "Requires synthetic native provider roundtrip",
-  );
-  const report = JSON.parse(readFileSync(".local/live-roundtrip.json", "utf8"));
-  expect(report.status).toBe("passed");
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("http://localhost:3000/doctor/login");
-  await page.getByLabel("Doctor ID", { exact: true }).fill("helios-local");
-  await page
-    .getByLabel("Access code", { exact: true })
-    .fill(process.env.DOCTOR_DEMO_ACCESS_CODE!);
-  await page.getByRole("button", { name: "Enter doctor workspace" }).click();
-  await expect(page).toHaveURL("http://localhost:3000/doctor");
-  await page.goto("http://localhost:3000/doctor/verification");
-  const filteredQueue = page.waitForResponse((response) => {
-    const url = new URL(response.url());
-    return (
-      url.pathname.endsWith("/verification-queue") &&
-      url.searchParams.get("search") === report.patientId &&
-      response.ok()
-    );
-  });
-  await page.getByLabel("Search verification queue").fill(report.patientId);
-  await filteredQueue;
-  await expect(
-    page.getByRole("heading", { name: "Verification Center" }),
-  ).toBeVisible();
-  // Filtered response has to arrive before counting, otherwise stale cards could be selected.
-  await expect
-    .poll(async () =>
-      page.locator('section[aria-label="Verification queue"]').innerText(),
-    )
-    .toMatch(new RegExp(`${report.patientId}|No matching items`));
-  for (let index = 0; index < 5; index++) {
-    const queue = page.locator('section[aria-label="Verification queue"]');
-    if (await queue.getByRole("heading", { name: "No matching items" }).count())
-      break;
-    const card = queue.locator("article").first();
-    await expect(card).toContainText(report.patientId);
-    const title = await card.getByRole("heading").innerText();
-    await card.getByRole("button", { name: "Review evidence" }).click();
-    await page
-      .getByRole("dialog", { name: "Verification review", exact: true })
-      .getByRole("button", { name: "Verify", exact: true })
-      .click();
-    await page
-      .getByRole("button", { name: "Confirm verify", exact: true })
-      .click();
-    await expect(
-      page.getByRole("dialog", { name: "Verification review", exact: true }),
-    ).not.toBeVisible();
-    await expect(
-      queue.getByRole("heading", { name: title, exact: true }),
-    ).toHaveCount(0);
-  }
-  await expect(
-    page.getByRole("heading", { name: "No matching items" }),
-  ).toBeVisible();
-  await page.goto(
-    `http://localhost:3000/doctor/patients/${report.patientId}?visitId=${report.visitId}`,
-  );
-  const intake = page.locator('section[aria-labelledby="live-intake-title"]');
-  await expect(
-    intake.getByText("DOCTOR VERIFIED", { exact: false }),
-  ).toHaveCount(5);
-  await page.reload();
-  await expect(
-    intake.getByText("DOCTOR VERIFIED", { exact: false }),
-  ).toHaveCount(5);
-  await page.screenshot({
-    path: test.info().outputPath("reviewed-native-intake.png"),
-    fullPage: true,
-  });
   expect(errors).toEqual([]);
 });

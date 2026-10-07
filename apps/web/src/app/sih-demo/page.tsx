@@ -30,39 +30,26 @@ export default function SihDemoPage() {
             Patient waiting time, turned into a clearer clinical story.
           </h1>
           <p className="mt-5 text-lg leading-8 text-slate-700">
-            HELIOS turns patient waiting time into structured clinical
-            intelligence for the doctor. The patient shares their story; the
-            doctor reviews evidence and remains the final decision-maker.
+            HELIOS listens to a patient’s symptoms in Hindi, asks relevant
+            follow-up questions, and saves a structured health story.
           </p>
         </section>
         <DemoConnectionStatus />
         <section
           aria-label="Choose a demonstration"
-          className="mt-8 grid gap-4 md:grid-cols-3"
+          className="mt-8 max-w-xl"
         >
           <DemoCard
             title="Patient experience"
-            description="Start the real consent-first Hindi or English intake. Text is available when a microphone is not."
-            href="/patient/language"
+            description="Start the consent-first Hindi voice conversation with interactive HELIOS clinicians."
+            href="/patient"
             action="Start patient intake"
-          />
-          <DemoCard
-            title="Doctor experience"
-            description="Sign in to the separate doctor workspace and inspect the live synthetic queue and records."
-            href="/doctor/login?returnTo=%2Fdoctor%2Fsih-demo"
-            action="Open doctor sign-in"
-          />
-          <DemoCard
-            title="Full end-to-end demo"
-            description="Open the protected presenter guide, then move between the real patient and doctor apps."
-            href="/doctor/sih-demo"
-            action="Open presenter guide"
           />
         </section>
         <p className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
           Demonstration data only — all showcase patients and documents are
-          synthetic. Clinical safety rules are not available in this build; a
-          queue priority label is not a SafetyEngine finding.
+          synthetic. HELIOS prepares patient information and does not diagnose
+          conditions or replace a medical consultation.
         </p>
       </div>
     </main>

@@ -1,0 +1,37 @@
+{
+  "name": "HELIOS on GitHub Codespaces",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/HELIOS",
+  "remoteUser": "vscode",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22",
+      "pnpmVersion": "11.19.0"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12",
+      "installTools": false
+    }
+  },
+  "forwardPorts": [3000, 8080, 9090],
+  "portsAttributes": {
+    "3000": { "label": "HELIOS patient UI", "onAutoForward": "openBrowser" },
+    "8080": { "label": "HELIOS patient API", "onAutoForward": "silent" },
+    "9090": { "label": "HELIOS native voice", "onAutoForward": "silent" }
+  },
+  "otherPortsAttributes": { "onAutoForward": "ignore" },
+  "postCreateCommand": "node scripts/setup-codespace.mjs",
+  "postStartCommand": "node scripts/start-codespace.mjs",
+  "waitFor": "postCreateCommand",
+  "shutdownAction": "stopCompose",
+  "hostRequirements": { "cpus": 2, "memory": "8gb", "storage": "32gb" },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "files.exclude": { "**/.local": true },
+        "python.defaultInterpreterPath": "${workspaceFolder}/voice-service/.venv/bin/python"
+      }
+    }
+  }
+}

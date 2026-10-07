@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { AyushService } from "../../src/ayush/ayush-service.js";
 import { AppError } from "../../src/utils/app-error.js";
-
 describe("AyushService security and safety boundaries", () => {
   it("blocks patient A from patient B records", async () => {
     const repository = baseRepository();
@@ -14,38 +13,6 @@ describe("AyushService security and safety boundaries", () => {
       statusCode: 403,
     });
   });
-
-  it("requires an active doctor for the doctor view", async () => {
-    const repository = baseRepository();
-    repository.activeDoctor.mockResolvedValue(null);
-    const service = create(repository);
-    await expect(
-      service.doctorView("patient-1", "token"),
-    ).rejects.toMatchObject({
-      code: "DOCTOR_NOT_AUTHORIZED",
-      statusCode: 403,
-    });
-  });
-
-  it("does not expose client control over doctor identity", async () => {
-    const repository = baseRepository();
-    repository.create.mockResolvedValue(record());
-    const service = create(repository);
-    await service.enter(
-      "patient-1",
-      {
-        system: "AYURVEDA",
-        useStatus: "CURRENT",
-        originalName: "Documented name",
-      },
-      "token",
-    );
-    expect(repository.create).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ actorUserId: "authenticated-doctor" }),
-    );
-  });
-
   it("shows unavailable interaction information and creates no RiskSignal", async () => {
     const repository = baseRepository();
     repository.patientView.mockResolvedValue({
@@ -65,60 +32,31 @@ describe("AyushService security and safety boundaries", () => {
       visits: [{ riskSignals: [] }],
     });
     const service = create(repository);
-    const view = await service.doctorView("patient-1", "token");
+    const view = await service.patientView("patient-1", "token");
     expect(view.interactionInformation).toBe("UNAVAILABLE");
     expect(view.existingSafetySignals).toEqual([]);
     expect(Object.keys(repository)).not.toContain("riskSignal");
   });
-
-  it("rejects an invalid signed doctor token before repository access", async () => {
-    const repository = baseRepository();
-    const service = new AyushService(
-      repository as never,
-      { rebuild: vi.fn() } as never,
-      { verify: () => "session" } as never,
-      {
-        verify: () => {
-          throw new AppError("invalid", 403, "DOCTOR_TOKEN_INVALID");
-        },
-      } as never,
-    );
-    await expect(service.doctorView("patient-1", "bad")).rejects.toMatchObject({
-      code: "DOCTOR_TOKEN_INVALID",
-    });
-    expect(repository.activeDoctor).not.toHaveBeenCalled();
-  });
 });
-
 function create(repository: ReturnType<typeof baseRepository>) {
   return new AyushService(
     repository as never,
     { rebuild: vi.fn().mockResolvedValue({ projectedEventCount: 1 }) } as never,
     { verify: () => "session-a" } as never,
-    { verify: () => "authenticated-doctor" } as never,
   );
 }
-
 function baseRepository() {
   return {
     sessionOwns: vi
       .fn()
       .mockResolvedValue({ id: "session-a", visitId: "visit-1" }),
-    activeDoctor: vi.fn().mockResolvedValue({
-      id: "authenticated-doctor",
-      displayName: "Dr Test",
-      role: "DOCTOR",
-    }),
-    assigned: vi.fn().mockResolvedValue(true),
     patientView: vi.fn(),
     create: vi.fn(),
-    find: vi.fn(),
     documentContext: vi.fn(),
     upsertDocument: vi.fn(),
     supersedeMissingDocumentRecords: vi.fn(),
   };
 }
-
 function record() {
   const now = new Date("2026-09-10T00:00:00Z");
   return {

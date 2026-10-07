@@ -2,6 +2,11 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  testMatch: [
+    "live-consultation.spec.ts",
+    "public-experience.spec.ts",
+    "presentation-regression.spec.ts",
+  ],
   fullyParallel: false,
   timeout: 30_000,
   retries: 0,
@@ -11,6 +16,14 @@ export default defineConfig({
     browserName: "chromium",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
+    permissions: ["microphone"],
+    launchOptions: {
+      args: [
+        "--use-fake-ui-for-media-stream",
+        "--use-fake-device-for-media-stream",
+        "--autoplay-policy=no-user-gesture-required",
+      ],
+    },
   },
   webServer: {
     command: "pnpm build && pnpm --filter @helios/web start",

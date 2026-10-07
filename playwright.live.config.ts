@@ -5,7 +5,6 @@ export default defineConfig({
   testMatch: [
     "live-consultation.spec.ts",
     "public-experience.spec.ts",
-    "doctor-native-handoff.spec.ts",
     "presentation-regression.spec.ts",
   ],
   timeout: 30000,

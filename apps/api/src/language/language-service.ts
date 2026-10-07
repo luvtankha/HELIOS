@@ -2,15 +2,11 @@ import { performance } from "node:perf_hooks";
 import type { LanguageCode, TranslationContext } from "@helios/shared";
 import type { Logger } from "pino";
 import { logger } from "../config/logger.js";
-import type { LanguageRepository } from "../repositories/language-repository.js";
-import type { DoctorProofService } from "../security/doctor-proof.js";
 import type { SessionProofService } from "../security/session-proof.js";
-import { AppError } from "../utils/app-error.js";
 import { MultilingualClinicalNormalizer } from "./clinical-normalizer.js";
 import type { LanguageDetectionProvider } from "./language-detection.js";
 import { LanguageRegistry } from "./language-registry.js";
 import type { TranslationProvider } from "./translation.js";
-
 export interface LanguageOperations {
   list(): unknown;
   get(code: string): unknown;
@@ -32,34 +28,23 @@ export interface LanguageOperations {
       contextType: TranslationContext;
     },
     sessionToken?: string,
-    doctorToken?: string,
   ): Promise<unknown>;
-  setDoctorLanguage(
-    language: LanguageCode,
-    doctorToken?: string,
-  ): Promise<void>;
 }
-
 export class LanguageService implements LanguageOperations {
   constructor(
     private readonly registry: LanguageRegistry,
     private readonly detector: LanguageDetectionProvider,
     private readonly translator: TranslationProvider,
     private readonly normalizer: MultilingualClinicalNormalizer,
-    private readonly repository: LanguageRepository,
     private readonly sessionProof: SessionProofService,
-    private readonly doctorProof: DoctorProofService,
     private readonly log: Logger = logger,
   ) {}
-
   list() {
     return this.registry.list();
   }
-
   get(code: string) {
     return this.registry.get(code);
   }
-
   detect(text: string, selectedLanguage?: LanguageCode, sessionToken?: string) {
     this.sessionProof.verify(sessionToken);
     const result = this.detector.detectFromText(text, selectedLanguage);
@@ -72,7 +57,6 @@ export class LanguageService implements LanguageOperations {
     );
     return result;
   }
-
   normalize(text: string, language: LanguageCode, sessionToken?: string) {
     this.sessionProof.verify(sessionToken);
     const started = performance.now();
@@ -86,7 +70,6 @@ export class LanguageService implements LanguageOperations {
     );
     return result;
   }
-
   async translate(
     input: {
       text: string;
@@ -95,9 +78,8 @@ export class LanguageService implements LanguageOperations {
       contextType: TranslationContext;
     },
     sessionToken?: string,
-    doctorToken?: string,
   ) {
-    this.authorize(sessionToken, doctorToken);
+    this.sessionProof.verify(sessionToken);
     this.registry.active(input.sourceLanguage);
     this.registry.active(input.targetLanguage);
     const started = performance.now();
@@ -111,25 +93,6 @@ export class LanguageService implements LanguageOperations {
     );
     return result;
   }
-
-  async setDoctorLanguage(language: LanguageCode, doctorToken?: string) {
-    this.registry.active(language);
-    const doctorId = this.doctorProof.verify(doctorToken);
-    const result = await this.repository.setDoctorLanguage(doctorId, language);
-    if (!result.count)
-      throw new AppError("Doctor not found", 404, "DOCTOR_NOT_FOUND");
-  }
-
-  private authorize(sessionToken?: string, doctorToken?: string) {
-    if (sessionToken) return this.sessionProof.verify(sessionToken);
-    if (doctorToken) return this.doctorProof.verify(doctorToken);
-    throw new AppError(
-      "Authentication is required",
-      401,
-      "LANGUAGE_AUTH_REQUIRED",
-    );
-  }
-
   private metric(
     operation: string,
     provider: string,

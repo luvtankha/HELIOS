@@ -1,7 +1,7 @@
 import { ButtonLink } from "../ui/button-link";
 
 interface RoleCardProps {
-  role: "Patient" | "Doctor";
+  role: "Patient";
   description: string;
   icon: string;
   href: string;

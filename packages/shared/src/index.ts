@@ -234,8 +234,6 @@ export interface TimelineEventDetailDto {
     changeReason: string;
   }>;
 }
-
-export type ComparisonStatus = "GENERATED" | "REVIEWED" | "ARCHIVED" | "STALE";
 export type ComparisonChangeType =
   | "NEW"
   | "REMOVED"
@@ -309,45 +307,6 @@ export interface ComparisonSummaryDto {
   notComparableCount: number;
   needsReviewCount: number;
 }
-
-export interface ComparisonDto {
-  id: string;
-  patientId: string;
-  patientName: string;
-  previousVisitId: string;
-  currentVisitId: string;
-  previousVisitDate: string;
-  currentVisitDate: string;
-  previousSnapshotId: string;
-  currentSnapshotId: string;
-  status: ComparisonStatus;
-  engineVersion: string;
-  createdAt: string;
-  summary: ComparisonSummaryDto;
-  changes: ChangeRecordDto[];
-}
-
-export interface ComparisonListItemDto {
-  id: string;
-  previousVisitId: string;
-  currentVisitId: string;
-  previousVisitDate: string;
-  currentVisitDate: string;
-  status: ComparisonStatus;
-  engineVersion: string;
-  createdAt: string;
-  summary: ComparisonSummaryDto;
-}
-
-export interface DoctorSessionDto {
-  doctorId: string;
-  displayName: string;
-  role: "DOCTOR" | "ADMIN";
-  doctorToken: string;
-}
-
-export type ClinicalBriefStatus =
-  "GENERATED" | "REVIEWED" | "STALE" | "ARCHIVED";
 export type BriefSectionType =
   | "PATIENT_SNAPSHOT"
   | "TODAYS_REASON"
@@ -418,38 +377,6 @@ export interface BriefSectionDto {
   claims: BriefClaimDto[];
 }
 
-export interface ClinicalBriefDto {
-  id: string;
-  patientId: string;
-  patientName: string;
-  patientCode: string;
-  age: number;
-  sex: PatientSex;
-  preferredLanguage: string;
-  visitId: string;
-  visitDate: string;
-  comparisonId?: string;
-  status: ClinicalBriefStatus;
-  version: number;
-  generatorVersion: string;
-  generatedAt: string;
-  narrative: string;
-  sections: BriefSectionDto[];
-  claimCount: number;
-}
-
-export interface ClinicalBriefListItemDto {
-  id: string;
-  patientId: string;
-  visitId: string;
-  visitDate: string;
-  status: ClinicalBriefStatus;
-  version: number;
-  generatorVersion: string;
-  generatedAt: string;
-  claimCount: number;
-}
-
 export enum VerificationStatus {
   Pending = "PENDING",
   Verified = "VERIFIED",
@@ -478,110 +405,6 @@ export type ClinicalVerificationStatus =
   | "DOCTOR_CORRECTED"
   | "DOCTOR_REJECTED"
   | "SUPERSEDED";
-
-export type VerificationAction =
-  | "VERIFY"
-  | "CORRECT"
-  | "REJECT"
-  | "MARK_UNCERTAIN"
-  | "CONFIRM_CURRENT"
-  | "KEEP_PREVIOUS"
-  | "SUPERSEDE";
-
-export type VerificationFactType =
-  | "LIVE_INTAKE_FACT"
-  | "CLINICAL_HISTORY"
-  | "SYMPTOM"
-  | "MEDICATION"
-  | "ALLERGY"
-  | "OBSERVATION"
-  | "DOCUMENT_FACT"
-  | "INTERVIEW_RESPONSE"
-  | "AYUSH_RECORD";
-
-export interface VerificationEvidenceDto {
-  kind: "DOCUMENT" | "INTERVIEW" | "VOICE" | "CLINICAL_RECORD";
-  sourceId: string;
-  label: string;
-  sourceText?: string;
-  language?: string;
-  normalizedValue?: unknown;
-  documentId?: string;
-  documentName?: string;
-  pageNumber?: number;
-  boundingBox?: unknown;
-  occurredAt?: string;
-}
-
-export interface VerificationValueDto {
-  value: unknown;
-  sourceType: string;
-  verificationStatus: ClinicalVerificationStatus;
-  recordedAt: string;
-  label?: string;
-}
-
-export interface VerificationHistoryDto {
-  id: string;
-  action: VerificationAction;
-  previousStatus: string;
-  newStatus: string;
-  originalValue: unknown;
-  verifiedValue: unknown;
-  reason?: string;
-  comment?: string;
-  doctorName: string;
-  verifiedAt: string;
-  factVersion: number;
-}
-
-export interface VerificationQueueItemDto {
-  reviewId: string;
-  patientId: string;
-  patientName: string;
-  patientCode: string;
-  visitId?: string;
-  visitDate?: string;
-  factType: VerificationFactType;
-  factId: string;
-  label: string;
-  value: unknown;
-  sourceType: string;
-  verificationStatus: ClinicalVerificationStatus;
-  version: number;
-  workflowPriority: number;
-  conflict: boolean;
-  bulkEligible: boolean;
-  evidenceAvailable: boolean;
-}
-
-export interface VerificationReviewDto extends VerificationQueueItemDto {
-  evidence: VerificationEvidenceDto[];
-  previous?: VerificationValueDto;
-  history: VerificationHistoryDto[];
-  safetySignalCount: number;
-}
-
-export interface VerificationMetricsDto {
-  needsReview: number;
-  conflicts: number;
-  verifiedToday: number;
-  correctedToday: number;
-  rejectedToday: number;
-}
-
-export interface VerificationQueueDto {
-  items: VerificationQueueItemDto[];
-  metrics: VerificationMetricsDto;
-  nextCursor?: string;
-}
-
-export interface VerificationActionResultDto {
-  verification: VerificationHistoryDto;
-  review: VerificationReviewDto;
-  dependentRefreshPending: boolean;
-  message: string;
-}
 
 export type AyushSystem =
   | "AYURVEDA"
@@ -953,101 +776,6 @@ export interface HealthData {
   version: string;
 }
 
-export type DoctorQueueStatus =
-  | "WAITING"
-  | "IN_PROGRESS"
-  | "NEEDS_REVIEW"
-  | "HIGH_PRIORITY_REVIEW"
-  | "VERIFIED"
-  | "COMPLETED";
-
-export interface DoctorQueueItemDto {
-  patientId: string;
-  patientCode: string;
-  fullName: string;
-  age: number;
-  sex: PatientSex;
-  phone?: string;
-  preferredLanguage: string;
-  visitId: string;
-  visitDate: string;
-  appointmentLabel: string;
-  tokenNumber?: string;
-  chiefComplaint?: string;
-  status: DoctorQueueStatus;
-  visitStatus: `${VisitStatus}`;
-  priority: "ROUTINE" | "ATTENTION" | "HIGH";
-  pendingVerificationCount: number;
-  openDocumentCount: number;
-  openSafetySignalCount: number;
-}
-
-export interface DoctorNotificationDto {
-  id: string;
-  kind:
-    | "INTAKE_READY"
-    | "SAFETY_ATTENTION"
-    | "DOCUMENT_REVIEW"
-    | "VERIFICATION_REQUIRED"
-    | "CONFLICT";
-  title: string;
-  summary: string;
-  patientId: string;
-  visitId: string;
-  createdAt: string;
-  priority: "NORMAL" | "HIGH";
-}
-
-export interface DoctorDashboardDto {
-  doctor: {
-    id: string;
-    displayName: string;
-    role: "DOCTOR" | "ADMIN";
-    preferredLanguage: string;
-  };
-  metrics: {
-    patientsToday: number;
-    waiting: number;
-    pendingVerification: number;
-    highPriority: number;
-    verifiedOrCompleted: number;
-  };
-  queue: DoctorQueueItemDto[];
-  notifications: DoctorNotificationDto[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  queueScope: "TODAY" | "RECENT_ACTIVE_DEMO_FALLBACK";
-  demoMode: boolean;
-}
-
-export interface DoctorNoteDto {
-  id: string;
-  patientId: string;
-  visitId?: string;
-  content: string;
-  author: { id: string; displayName: string };
-  createdAt: string;
-  updatedAt: string;
-  editable: boolean;
-}
-
-export interface DoctorSafetySignalDto {
-  id: string;
-  category: string;
-  severity: "INFO" | "LOW" | "MEDIUM" | "HIGH";
-  title: string;
-  description: string;
-  source: string;
-  status: "OPEN" | "ACKNOWLEDGED" | "DISMISSED" | "RESOLVED";
-  createdAt: string;
-  resolvedAt?: string;
-  reviewMessage: "Requires clinical review.";
-}
-
 export interface LiveIntakeFactDto {
   id: string;
   field: string;
@@ -1071,49 +799,6 @@ export interface LiveIntakeDto {
   facts: LiveIntakeFactDto[];
 }
 
-export interface DoctorPatientWorkspaceDto {
-  doctor: { id: string; displayName: string; role: "DOCTOR" | "ADMIN" };
-  patient: {
-    id: string;
-    patientCode: string;
-    fullName: string;
-    age: number;
-    sex: PatientSex;
-    phone?: string;
-    preferredLanguage: string;
-  };
-  visit: {
-    id: string;
-    status: `${VisitStatus}`;
-    visitType: "PRE_CONSULTATION" | "FOLLOW_UP";
-    tokenNumber?: string;
-    startedAt: string;
-    completedAt?: string;
-    chiefComplaint?: string;
-  };
-  clinicalBrief?: ClinicalBriefDto;
-  comparison?: ComparisonDto;
-  safetySignals: DoctorSafetySignalDto[];
-  documents: MedicalDocumentDto[];
-  timeline: TimelineEventDto[];
-  verificationHistory: VerificationHistoryDto[];
-  notes: DoctorNoteDto[];
-  liveIntake?: LiveIntakeDto;
-  routing?: { specialization: string; reason: string; emergency: boolean };
-  aiInsights: {
-    label: "AI-STRUCTURED";
-    requiresVerification: true;
-    missingInformation: string[];
-    contradictions: string[];
-    pendingVerificationCount: number;
-    structuredFactCount: number;
-  };
-  capabilities: {
-    safetyEngineAvailable: false;
-    requestInformationAvailable: false;
-  };
-}
-
 export type QueueTokenStatus =
   | "WAITING"
   | "CALLED"
@@ -1133,40 +818,6 @@ export interface PatientQueueStatusDto {
   estimateLabel: string;
   currentToken?: string;
   queuePaused: boolean;
-  updatedAt: string;
-  refreshAfterSeconds: number;
-}
-
-export interface DoctorQueueEntryDto {
-  id: string;
-  tokenNumber: string;
-  patientId: string;
-  patientCode: string;
-  patientName: string;
-  age: number;
-  chiefComplaint?: string;
-  status: QueueTokenStatus;
-  priority: "NORMAL" | "PRIORITY_REVIEW";
-  waitMinutes: number;
-  createdAt: string;
-  calledAt?: string;
-  consultationStartedAt?: string;
-  completedAt?: string;
-}
-
-export interface DoctorQueueDto {
-  queueKey: string;
-  queueDate: string;
-  paused: boolean;
-  currentToken?: string;
-  entries: DoctorQueueEntryDto[];
-  counts: {
-    waiting: number;
-    called: number;
-    inConsultation: number;
-    completed: number;
-    priorityReview: number;
-  };
   updatedAt: string;
   refreshAfterSeconds: number;
 }

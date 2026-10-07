@@ -7,11 +7,8 @@ import { LanguageService } from "../../src/language/language-service.js";
 import { ApprovedResourceTranslationProvider } from "../../src/language/translation.js";
 import { InterviewEngine } from "../../src/interview/interview-engine.js";
 import { RuleBasedMedicalEntityExtractor } from "../../src/document-ai/providers.js";
-import { DoctorProofService } from "../../src/security/doctor-proof.js";
 import { SessionProofService } from "../../src/security/session-proof.js";
-
 const normalizer = new MultilingualClinicalNormalizer();
-
 describe("multilingual language layer", () => {
   it("marks only English and Hindi as fully supported", () => {
     const profiles = new LanguageRegistry().list();
@@ -25,7 +22,6 @@ describe("multilingual language layer", () => {
       direction: "RTL",
     });
   });
-
   it.each([
     ["I have stomach pain for three days", "en"],
     ["मुझे तीन दिन से पेट में दर्द है", "hi"],
@@ -41,7 +37,6 @@ describe("multilingual language layer", () => {
       expect(result.originalText).toBe(text);
     },
   );
-
   it.each([
     ["No fever", "en"],
     ["बुखार नहीं है", "hi"],
@@ -51,14 +46,12 @@ describe("multilingual language layer", () => {
       expect.objectContaining({ conceptId: "SYMPTOM_FEVER", state: "NO" }),
     );
   });
-
   it("preserves severity and does not over-normalize ambiguity", () => {
     expect(normalizer.normalize("pain level seven", "en").severity).toBe(7);
     const ambiguous = normalizer.normalize("Pet kharab hai", "hi");
     expect(ambiguous.needsClarification).toBe(true);
     expect(ambiguous.concepts).toEqual([]);
   });
-
   it("reports Hindi and English for code-switched text", () => {
     const result = new DeterministicLanguageDetectionProvider().detectFromText(
       "Pet mein three days se pain hai",
@@ -68,13 +61,11 @@ describe("multilingual language layer", () => {
     expect(result.detectedLanguages).toEqual(["hi", "en"]);
     expect(result.uncertain).toBe(false);
   });
-
   it("uses selected language when detection is uncertain", () => {
     expect(
       new DeterministicLanguageDetectionProvider().detectFromText("hmm", "hi"),
     ).toMatchObject({ primaryLanguage: "hi", uncertain: true });
   });
-
   it("uses approved translations and safe original-text fallback", async () => {
     const provider = new ApprovedResourceTranslationProvider();
     await expect(
@@ -100,7 +91,6 @@ describe("multilingual language layer", () => {
       fallbackUsed: true,
     });
   });
-
   it("changes question presentation without changing state or option values", () => {
     const engine = new InterviewEngine();
     const state = engine.initialize("stomach pain");
@@ -111,7 +101,6 @@ describe("multilingual language layer", () => {
     expect(hindi?.optionValues).toEqual(english?.options);
     expect(state.facts.chiefComplaint?.rawAnswers).toEqual(["stomach pain"]);
   });
-
   it("extracts a Hindi medication frequency while preserving source", () => {
     const facts = new RuleBasedMedicalEntityExtractor().extract(
       [{ pageNumber: 1, text: "दिन में दो बार", blocks: [], confidence: 0.95 }],
@@ -125,7 +114,6 @@ describe("multilingual language layer", () => {
       }),
     );
   });
-
   it("requires authentication for translation and logs no patient text", async () => {
     const log = { info: vi.fn() };
     const service = serviceWith(log);
@@ -136,7 +124,7 @@ describe("multilingual language layer", () => {
         targetLanguage: "hi",
         contextType: "DOCTOR_DISPLAY",
       }),
-    ).rejects.toMatchObject({ code: "LANGUAGE_AUTH_REQUIRED" });
+    ).rejects.toMatchObject({ code: "VOICE_SESSION_TOKEN_REQUIRED" });
     const proof = new SessionProofService("multilingual-test-secret-long");
     await service.translate(
       {
@@ -152,7 +140,6 @@ describe("multilingual language layer", () => {
     );
   });
 });
-
 function serviceWith(log: { info: ReturnType<typeof vi.fn> }) {
   const secret = "multilingual-test-secret-long";
   return new LanguageService(
@@ -160,9 +147,7 @@ function serviceWith(log: { info: ReturnType<typeof vi.fn> }) {
     new DeterministicLanguageDetectionProvider(),
     new ApprovedResourceTranslationProvider(),
     normalizer,
-    { setDoctorLanguage: vi.fn(async () => ({ count: 1 })) } as never,
     new SessionProofService(secret),
-    new DoctorProofService(secret),
     log as never,
   );
 }

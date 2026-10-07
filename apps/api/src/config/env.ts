@@ -1,19 +1,16 @@
 import { z } from "zod";
-
 const booleanString = (defaultValue = false) =>
   z
     .enum(["true", "false"])
     .default(defaultValue ? "true" : "false")
     .transform((value) => value === "true");
-
 const localSessionSecret = "helios-local-session-secret";
-
 const envSchema = z
   .object({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    PORT: z.coerce.number().int().positive().max(65_535).default(5000),
+    PORT: z.coerce.number().int().positive().max(65535).default(5000),
     DATABASE_URL: z.string().trim().default(""),
     WEB_ORIGIN: z.string().url().default("http://localhost:3000"),
     LOG_LEVEL: z
@@ -34,15 +31,8 @@ const envSchema = z
       .number()
       .int()
       .min(300)
-      .max(86_400)
-      .default(28_800),
-    DOCTOR_SESSION_TTL_SECONDS: z.coerce
-      .number()
-      .int()
-      .min(300)
-      .max(43_200)
-      .default(3_600),
-    DOCTOR_DEMO_ACCESS_CODE: z.string().min(8).default("helios-demo-doctor"),
+      .max(86400)
+      .default(28800),
     BRIEF_RECENT_MONTHS: z.coerce.number().int().min(1).max(120).default(12),
     BRIEF_MAX_SYMPTOMS: z.coerce.number().int().min(1).max(20).default(6),
     BRIEF_MAX_CHANGES: z.coerce.number().int().min(1).max(20).default(6),
@@ -53,17 +43,17 @@ const envSchema = z
     SPEECH_LOCAL_TIMEOUT_MS: z.coerce
       .number()
       .int()
-      .min(1_000)
-      .max(180_000)
-      .default(120_000),
+      .min(1000)
+      .max(180000)
+      .default(120000),
     SPEECH_API_KEY: z.string().trim().default(""),
     SPEECH_MODEL: z.string().trim().default("gpt-4o-mini-transcribe"),
     SPEECH_TIMEOUT_MS: z.coerce
       .number()
       .int()
-      .min(1_000)
-      .max(120_000)
-      .default(30_000),
+      .min(1000)
+      .max(120000)
+      .default(30000),
     VOICE_MAX_DURATION_SECONDS: z.coerce
       .number()
       .int()
@@ -73,32 +63,27 @@ const envSchema = z
     VOICE_MAX_FILE_BYTES: z.coerce
       .number()
       .int()
-      .min(64_000)
-      .max(25_000_000)
-      .default(8_000_000),
+      .min(64000)
+      .max(25000000)
+      .default(8000000),
     DOCUMENT_MAX_FILE_BYTES: z.coerce
       .number()
       .int()
-      .min(100_000)
-      .max(50_000_000)
-      .default(15_000_000),
+      .min(100000)
+      .max(50000000)
+      .default(15000000),
     DOCUMENT_PROCESSING_TIMEOUT_MS: z.coerce
       .number()
       .int()
-      .min(5_000)
-      .max(300_000)
-      .default(90_000),
+      .min(5000)
+      .max(300000)
+      .default(90000),
     DOCUMENT_OCR_PROVIDER: z.enum(["mock", "local"]).default("mock"),
     DOCUMENT_PROCESSING_VERSION: z.string().trim().default("phase6-v1"),
     CLINICAL_NLU_PROVIDER: z.enum(["rules", "openai"]).default("rules"),
     AI_API_KEY: z.string().trim().default(""),
     AI_MODEL: z.string().trim().default("gpt-4.1-mini"),
-    AI_TIMEOUT_MS: z.coerce
-      .number()
-      .int()
-      .min(1_000)
-      .max(60_000)
-      .default(12_000),
+    AI_TIMEOUT_MS: z.coerce.number().int().min(1000).max(60000).default(12000),
   })
   .superRefine((value, context) => {
     if (
@@ -127,16 +112,6 @@ const envSchema = z
     }
     if (
       value.NODE_ENV === "production" &&
-      value.DOCTOR_DEMO_ACCESS_CODE === "helios-demo-doctor"
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["DOCTOR_DEMO_ACCESS_CODE"],
-        message: "must be replaced in production",
-      });
-    }
-    if (
-      value.NODE_ENV === "production" &&
       /(^|[\\/])public([\\/]|$)/i.test(value.STORAGE_PATH)
     ) {
       context.addIssue({
@@ -146,9 +121,7 @@ const envSchema = z
       });
     }
   });
-
 export type Environment = z.infer<typeof envSchema>;
-
 export function parseEnvironment(input: NodeJS.ProcessEnv): Environment {
   const result = envSchema.safeParse(input);
   if (!result.success) {
@@ -159,5 +132,4 @@ export function parseEnvironment(input: NodeJS.ProcessEnv): Environment {
   }
   return result.data;
 }
-
 export const env = parseEnvironment(process.env);

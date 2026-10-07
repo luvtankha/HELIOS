@@ -5,7 +5,6 @@ import { createLanguageRouter } from "../../src/routes/languages.js";
 import { errorHandler } from "../../src/middleware/error-handler.js";
 import { requestContext } from "../../src/middleware/request-context.js";
 import type { LanguageOperations } from "../../src/language/language-service.js";
-
 function service(): LanguageOperations {
   return {
     list: vi.fn(() => [{ code: "en" }, { code: "hi" }]),
@@ -19,10 +18,8 @@ function service(): LanguageOperations {
       ...input,
       translatedText: input.text,
     })),
-    setDoctorLanguage: vi.fn(async () => undefined),
   };
 }
-
 function app(operations: LanguageOperations) {
   const value = express();
   value.use(express.json());
@@ -31,20 +28,17 @@ function app(operations: LanguageOperations) {
   value.use(errorHandler);
   return value;
 }
-
 describe("language API", () => {
   it("lists capability profiles", async () => {
     const response = await request(app(service())).get("/api/v1/languages");
     expect(response.status).toBe(200);
     expect(response.body.data).toEqual([{ code: "en" }, { code: "hi" }]);
   });
-
   it("returns a single language", async () => {
     const response = await request(app(service())).get("/api/v1/languages/hi");
     expect(response.status).toBe(200);
     expect(response.body.data.code).toBe("hi");
   });
-
   it("forwards selected language and proof to detection", async () => {
     const operations = service();
     const response = await request(app(operations))
@@ -58,7 +52,6 @@ describe("language API", () => {
       "proof",
     );
   });
-
   it("rejects invalid language codes before calling a provider", async () => {
     const operations = service();
     const response = await request(app(operations))
@@ -71,18 +64,5 @@ describe("language API", () => {
       });
     expect(response.status).toBe(400);
     expect(operations.translate).not.toHaveBeenCalled();
-  });
-
-  it("updates doctor display language through doctor proof", async () => {
-    const operations = service();
-    const response = await request(app(operations))
-      .put("/api/v1/doctor/language")
-      .set("x-doctor-token", "doctor-proof")
-      .send({ language: "hi" });
-    expect(response.status).toBe(204);
-    expect(operations.setDoctorLanguage).toHaveBeenCalledWith(
-      "hi",
-      "doctor-proof",
-    );
   });
 });

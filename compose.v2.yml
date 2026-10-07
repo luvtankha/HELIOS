@@ -84,29 +84,6 @@ services:
       - "9090:9090"
     restart: unless-stopped
 
-  doctor-api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-helios}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-helios}
-      SESSION_TOKEN_SECRET: ${SESSION_TOKEN_SECRET:?Set SESSION_TOKEN_SECRET}
-      DOCTOR_DEMO_ACCESS_CODE: ${DOCTOR_DEMO_ACCESS_CODE:?Set DOCTOR_DEMO_ACCESS_CODE}
-      WEB_ORIGIN: ${HELIOS_ALLOWED_ORIGINS:-http://localhost:3000}
-      ENABLE_DEMO_MODE: "false"
-      DEMO_MODE: "false"
-    ports:
-      - "5000:5000"
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-    depends_on:
-      patient-api:
-        condition: service_healthy
-    restart: unless-stopped
-
   prometheus:
     image: prom/prometheus:v3.5.0
     volumes:

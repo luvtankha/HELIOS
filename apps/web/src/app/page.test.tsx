@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import Home from "./page";
 
 describe("HELIOS landing shell", () => {
-  it("renders the product identity and placeholder roles", () => {
+  it("offers patient entry without a doctor workspace", () => {
     render(<Home />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       "Your health story matters",
@@ -11,11 +11,15 @@ describe("HELIOS landing shell", () => {
     expect(
       screen.getByRole("link", { name: /patient experience/i }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /patient experience/i })).toHaveAttribute(
+      "href",
+      "/patient",
+    );
     expect(
-      screen.getByRole("link", { name: /doctor experience/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole("link", { name: /doctor experience/i }),
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByText(/patient journey is available/i),
+      screen.getByText(/start a Hindi voice conversation/i),
     ).toBeInTheDocument();
   });
 });

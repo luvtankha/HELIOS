@@ -25,7 +25,7 @@ export function Header() {
         </span>
       </a>
       <span className="rounded-full border border-ink/10 bg-white px-4 py-2 text-sm text-ink/70">
-        Phase 13 · Patient + doctor experiences
+        Patient voice consultation
       </span>
     </header>
   );

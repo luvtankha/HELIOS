@@ -16,8 +16,8 @@ const foundations = [
   },
   {
     icon: "✓",
-    title: "Doctor-reviewable",
-    copy: "Patient-reported facts and their evidence remain available for the clinician to review.",
+    title: "A clearer health story",
+    copy: "Symptoms and follow-up answers are organized into a structured patient record.",
   },
 ];
 
@@ -41,24 +41,16 @@ export default function Home() {
           <p className="mt-2 max-w-2xl text-lg leading-8 text-ink/70">
             AI-assisted pre-consultation and clinical case-taking.
           </p>
-          <div className="mt-8 grid max-w-2xl gap-4 sm:grid-cols-2">
+          <div className="mt-8 max-w-md">
             <RoleCard
               role="Patient"
               href="/patient"
               icon="♙"
               description="Share your health story"
             />
-            <RoleCard
-              role="Doctor"
-              href="/doctor"
-              icon="♧"
-              description="Review patient insights"
-              variant="secondary"
-            />
           </div>
           <p className="mt-4 text-xs text-ink/55">
-            The patient journey is available together with a separate doctor
-            clinical workspace.
+            Start a Hindi voice conversation and share your symptoms with HELIOS.
           </p>
         </div>
         <div
@@ -75,10 +67,10 @@ export default function Home() {
                 <span aria-hidden="true" className="text-teal-200">→</span>
               </div>
               <p className="mt-10 font-serif text-3xl">
-                Share symptoms in Hindi. Give your doctor a clearer health story.
+                Share symptoms in Hindi. Build a clearer health story.
               </p>
               <div className="mt-8 grid grid-cols-3 gap-3 text-center text-xs">
-                {["Conversation", "Intake", "Doctor review"].map((item) => (
+                {["Conversation", "Follow-up", "Saved record"].map((item) => (
                   <div
                     key={item}
                     className="rounded-xl border border-white/15 bg-white/5 px-2 py-4"

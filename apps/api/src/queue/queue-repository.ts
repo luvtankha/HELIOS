@@ -1,7 +1,6 @@
-import { Prisma, type PrismaClient, type QueueStatus } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 import { requireDatabase } from "../repositories/database.js";
 import { env } from "../config/env.js";
-
 const tokenInclude = {
   patient: {
     select: {
@@ -17,10 +16,8 @@ const tokenInclude = {
 export type QueueRow = Prisma.QueueEntryGetPayload<{
   include: typeof tokenInclude;
 }>;
-
 export class QueueRepository {
   constructor(private readonly prisma: PrismaClient) {}
-
   async checkIn(
     sessionId: string,
     queueKey: string,
@@ -88,7 +85,10 @@ export class QueueRepository {
                 patientId: session.patientId,
               },
             },
-            create: { doctorId: preferredDoctorId, patientId: session.patientId },
+            create: {
+              doctorId: preferredDoctorId,
+              patientId: session.patientId,
+            },
             update: { active: true },
           });
         } else if (env.DEMO_MODE) {
@@ -152,7 +152,6 @@ export class QueueRepository {
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
   }
-
   async bySession(sessionId: string) {
     requireDatabase();
     return this.prisma.queueEntry.findFirst({
@@ -164,13 +163,6 @@ export class QueueRepository {
     requireDatabase();
     return this.prisma.queueEntry.findUnique({
       where: { visitId },
-      include: tokenInclude,
-    });
-  }
-  async byId(id: string) {
-    requireDatabase();
-    return this.prisma.queueEntry.findUnique({
-      where: { id },
       include: tokenInclude,
     });
   }
@@ -195,213 +187,6 @@ export class QueueRepository {
       where: { queueKey_queueDate: { queueKey, queueDate } },
     });
   }
-  async doctor(id: string) {
-    requireDatabase();
-    return this.prisma.user.findFirst({
-      where: { id, status: "ACTIVE", role: { in: ["DOCTOR", "ADMIN"] } },
-      select: { id: true, role: true, displayName: true },
-    });
-  }
-  async assigned(doctorId: string, patientId: string, isAdmin: boolean) {
-    requireDatabase();
-    if (isAdmin) return true;
-    return Boolean(
-      (
-        await this.prisma.doctorPatientAssignment.findUnique({
-          where: { doctorId_patientId: { doctorId, patientId } },
-          select: { active: true },
-        })
-      )?.active,
-    );
-  }
-
-  async callNext(
-    queueKey: string,
-    queueDate: Date,
-    doctorId: string,
-    allowedPatientIds: string[],
-    requestId?: string,
-  ) {
-    requireDatabase();
-    return this.prisma.$transaction(
-      async (tx) => {
-        const control = await tx.queueCounter.findUnique({
-          where: { queueKey_queueDate: { queueKey, queueDate } },
-        });
-        if (control?.paused) return { kind: "PAUSED" as const };
-        const active = await tx.queueEntry.findFirst({
-          where: {
-            queueKey,
-            queueDate,
-            status: "CALLED",
-            patientId: { in: allowedPatientIds },
-          },
-          include: tokenInclude,
-          orderBy: { calledAt: "asc" },
-        });
-        if (active) return { kind: "ACTIVE" as const, row: active };
-        const waiting = await tx.queueEntry.findMany({
-          where: {
-            queueKey,
-            queueDate,
-            status: "WAITING",
-            patientId: { in: allowedPatientIds },
-          },
-          include: tokenInclude,
-          orderBy: [{ priority: "desc" }, { createdAt: "asc" }, { id: "asc" }],
-          take: 1,
-        });
-        const next = waiting[0];
-        if (!next) return { kind: "EMPTY" as const };
-        const changed = await tx.queueEntry.updateMany({
-          where: { id: next.id, status: "WAITING" },
-          data: { status: "CALLED", calledAt: new Date(), doctorId },
-        });
-        if (changed.count !== 1) return { kind: "RACE" as const };
-        await this.event(
-          tx,
-          next.id,
-          "TOKEN_CALLED",
-          doctorId,
-          "DOCTOR",
-          { queueKey },
-          requestId,
-        );
-        return {
-          kind: "CALLED" as const,
-          row: await tx.queueEntry.findUniqueOrThrow({
-            where: { id: next.id },
-            include: tokenInclude,
-          }),
-        };
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
-  }
-
-  async transition(
-    id: string,
-    expected: QueueStatus,
-    next: QueueStatus,
-    action: string,
-    actorId: string,
-    actorRole: string,
-    requestId?: string,
-  ) {
-    requireDatabase();
-    return this.prisma.$transaction(
-      async (tx) => {
-        const current = await tx.queueEntry.findUnique({
-          where: { id },
-          include: tokenInclude,
-        });
-        if (!current || current.status !== expected) return null;
-        const now = new Date();
-        const changed = await tx.queueEntry.updateMany({
-          where: { id, status: expected },
-          data: {
-            status: next,
-            ...(next === "CALLED" && { calledAt: now, doctorId: actorId }),
-            ...(next === "IN_CONSULTATION" && {
-              consultationStartedAt: now,
-              doctorId: actorId,
-            }),
-            ...(["COMPLETED", "CANCELLED", "NO_SHOW", "SKIPPED"].includes(
-              next,
-            ) && { completedAt: now }),
-          },
-        });
-        if (changed.count !== 1) return null;
-        if (next === "IN_CONSULTATION")
-          await tx.visit.update({
-            where: { id: current.visitId },
-            data: { status: "IN_PROGRESS" },
-          });
-        if (next === "COMPLETED")
-          await tx.visit.update({
-            where: { id: current.visitId },
-            data: { status: "COMPLETED", completedAt: now },
-          });
-        await this.event(
-          tx,
-          id,
-          action,
-          actorId,
-          actorRole,
-          { previousStatus: expected, newStatus: next },
-          requestId,
-        );
-        return tx.queueEntry.findUniqueOrThrow({
-          where: { id },
-          include: tokenInclude,
-        });
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
-  }
-
-  async recall(id: string, actorId: string, requestId?: string) {
-    requireDatabase();
-    return this.prisma.$transaction(
-      async (tx) => {
-        const row = await tx.queueEntry.findUnique({
-          where: { id },
-          include: tokenInclude,
-        });
-        if (!row || row.status !== "CALLED") return null;
-        await tx.queueEntry.update({
-          where: { id },
-          data: { calledAt: new Date() },
-        });
-        await this.event(
-          tx,
-          id,
-          "TOKEN_RECALLED",
-          actorId,
-          "DOCTOR",
-          undefined,
-          requestId,
-        );
-        return tx.queueEntry.findUniqueOrThrow({
-          where: { id },
-          include: tokenInclude,
-        });
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
-  }
-
-  async pause(
-    queueKey: string,
-    queueDate: Date,
-    paused: boolean,
-    actorId: string,
-    requestId?: string,
-  ) {
-    requireDatabase();
-    return this.prisma.$transaction(
-      async (tx) => {
-        const counter = await tx.queueCounter.upsert({
-          where: { queueKey_queueDate: { queueKey, queueDate } },
-          create: { queueKey, queueDate, paused },
-          update: { paused },
-        });
-        await tx.auditLog.create({
-          data: {
-            actorUserId: actorId,
-            action: paused ? "QUEUE_PAUSED" : "QUEUE_RESUMED",
-            entityType: "QueueCounter",
-            entityId: counter.id,
-            ...(requestId && { requestId }),
-            metadata: { queueKey },
-          },
-        });
-        return counter;
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
-  }
-
   private async event(
     tx: Prisma.TransactionClient,
     tokenId: string,

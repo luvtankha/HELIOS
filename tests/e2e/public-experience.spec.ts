@@ -53,13 +53,13 @@ for (const viewport of [
 }
 
 for (const width of [1024, 1280, 1440, 1920]) {
-  test(`@responsive doctor login fits ${width}px`, async ({ page }) => {
+  test(`@responsive patient entry fits ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto("/doctor/login");
+    await page.goto("/patient");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Sign in to your workspace" }),
+      page.getByRole("button", { name: "हाँ, मैं सहमत हूँ" }),
     ).toBeVisible();
-    await expect(page.getByLabel("Access code")).toHaveValue("");
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -68,7 +68,7 @@ for (const width of [1024, 1280, 1440, 1920]) {
   });
 }
 
-for (const path of ["/patient", "/doctor/login"]) {
+for (const path of ["/", "/patient"]) {
   test(`@a11y ${path} has no serious automated accessibility violations`, async ({
     page,
   }) => {
@@ -81,6 +81,21 @@ for (const path of ["/patient", "/doctor/login"]) {
     ).toEqual([]);
   });
 }
+
+test("homepage opens the patient experience without dashboard links", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.locator('a[href^="/doctor"]')).toHaveCount(0);
+  await page
+    .getByRole("link", { name: "Patient experience", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/patient(?:\/live)?$/);
+  await expect(
+    page.getByRole("button", { name: "हाँ, मैं सहमत हूँ" }),
+  ).toBeVisible();
+});
 
 test("@performance records public patient navigation timing", async ({
   page,

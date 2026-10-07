@@ -1,0 +1,42 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sleep infinity
+    volumes:
+      - ..:/workspaces/HELIOS:cached
+      - helios-database-secrets:/run/helios-db-secrets:ro
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - helios-network
+  database:
+    image: postgres:16-bookworm
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/usr/local/bin/helios-postgres-entrypoint.sh"]
+    command: ["postgres"]
+    environment:
+      POSTGRES_USER: helios
+      POSTGRES_DB: helios
+    volumes:
+      - helios-postgres-data:/var/lib/postgresql/data
+      - helios-database-secrets:/run/helios-db-secrets
+      - ./postgres-entrypoint.sh:/usr/local/bin/helios-postgres-entrypoint.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helios -d helios"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    networks:
+      - helios-network
+
+volumes:
+  helios-postgres-data:
+  helios-database-secrets:
+
+networks:
+  helios-network:
+    driver: bridge
