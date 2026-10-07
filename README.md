@@ -133,6 +133,8 @@ Press **Ctrl+C** to stop the service group. Stop the dedicated database separate
 
 The repository includes a Codespaces environment for running the full patient application directly from a GitHub checkout. It runs Java, Python and PostgreSQL alongside Next.js. It is a development/demo host that must stay running for the application to remain available.
 
+The hosted demo is [HELIOS patient intake](https://humble-space-giggle-x5w6q4v75wvxcv74p-3000.app.github.dev/patient). Resume its existing codespace, **humble space giggle**, from [GitHub Codespaces](https://github.com/codespaces) when it has stopped. The current codespace uses a 30-minute idle timeout; opening the patient link does not start a stopped codespace.
+
 1. Open the [HELIOS repository](https://github.com/luvtankha/HELIOS), choose **Code → Codespaces** and create a codespace on `main`.
 2. Provide `GEMINI_API_KEY` as a GitHub Codespaces secret available to this repository, or place it in the codespace's private `.env`. Do not commit the key.
 3. In the codespace terminal, run:
@@ -146,6 +148,8 @@ The setup/start scripts configure the current codespace's browser-facing URLs ra
 
 Forward application ports **3000, 8080 and 9090**. For a public demonstration, these three forwarded ports must be accessible to the browser using the published web URL; set their visibility to **Public** in the Codespaces Ports panel when sharing without GitHub authentication. Keep the database port private and unforwarded. GitHub documents port visibility and the forwarded URL format in [Forwarding ports in your codespace](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace).
 
+If a public port returns a gateway error even though its local health check passes, stop forwarding that port and add **`0.0.0.0:3000`**, **`0.0.0.0:8080`** or **`0.0.0.0:9090`** in the Ports panel, then set the replacement to Public. This fixed forwarding in the hosted demo. Keep the numeric `forwardPorts` entries in `.devcontainer/devcontainer.json`; Codespaces does not support the `host:port` variation in that configuration.
+
 The patient URL has this form:
 
 ```text
@@ -154,7 +158,7 @@ https://<codespace-name>-3000.app.github.dev/patient
 
 The two backend URLs use the same name with ports `8080` and `9090`. Use the actual address printed by the scripts or shown in the Ports panel.
 
-Codespaces can stop after inactivity, and personal accounts have bounded included compute/storage usage. Check remaining usage and account spending settings before keeping it running. It is not guaranteed free, permanent production hosting. See [GitHub Codespaces billing](https://docs.github.com/en/billing/concepts/product-billing/github-codespaces). This README describes the deployment path; it does not establish that a codespace or public deployment has already been created.
+Codespaces can stop after inactivity, and personal accounts have bounded included compute/storage usage. Check remaining usage and account spending settings before keeping it running. It is not guaranteed free, permanent production hosting. See [GitHub Codespaces billing](https://docs.github.com/en/billing/concepts/product-billing/github-codespaces).
 
 ## Health and verification
 
